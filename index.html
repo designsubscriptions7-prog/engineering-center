@@ -533,6 +533,13 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
       <div class="card"><div id="teamDetailBars"></div></div>
       <div class="tgrid" id="teamDetailGrid" style="margin-top:1px"></div>
     </section>
+    <section>
+      <div class="shead">
+        <div><span class="idx mono">T4 / FINDINGS</span><h2 style="margin-top:6px">Автоматические выводы</h2></div>
+        <div class="note">Формируются по данным кураторов и фактического исполнения. Обновляются автоматически.</div>
+      </div>
+      <div class="ins" id="teamInsights"></div>
+    </section>
   </div>
 </div>
 
@@ -1111,8 +1118,38 @@ function renderTeam(){
       '<div class="trow"><span>с отставанием</span><b style="color:'+(p.delayed?'var(--hold)':'var(--ink)')+'">'+p.delayed+'</b></div></div>';
   }).join('');
   renderTeamDetail();
+  var ti=document.getElementById('teamInsights'); if(ti) ti.innerHTML=buildTeamInsights();
 }
 function fmtArea2(n){return Math.round(n).toLocaleString('ru-RU')+' м²';}
+function buildTeamInsights(){
+  var out=[];
+  var C=CURRENT||[];
+  if(C.length){
+    var aiC={}; C.forEach(function(p){ if(p.aiOwner) aiC[p.aiOwner]=(aiC[p.aiOwner]||0)+1; });
+    var topAI=Object.entries(aiC).sort(function(a,b){return b[1]-a[1];})[0];
+    if(topAI && topAI[1]>=2) out.push({tag:'КЛЮЧЕВАЯ ЗАВИСИМОСТЬ · АИ',cls:'warn',html:'<b>'+topAI[0]+'</b> курирует «Альбом АИ» в <span class="n">'+topAI[1]+'</span> из <span class="n">'+C.length+'</span> текущих проектов. Высокая концентрация — риск узкого места по направлению АИ.'});
+    var delayed=C.filter(function(p){return (p.delay||0)>0;}).sort(function(a,b){return b.delay-a.delay;});
+    if(delayed.length) out.push({tag:'РИСК · ОТСТАВАНИЯ',cls:'warn',html:'<span class="n">'+delayed.length+'</span> проектов идут с отставанием: '+delayed.slice(0,3).map(function(p){return p.name+' (+'+p.delay+' дн.)';}).join(', ')+'.'});
+    var avg=Math.round(C.reduce(function(s,p){return s+(p.overall||0);},0)/C.length*100);
+    var lead=C.slice().sort(function(a,b){return (b.overall||0)-(a.overall||0);})[0];
+    out.push({tag:'СРЕДНИЙ ПРОГРЕСС',cls:'',html:'Средняя готовность текущих проектов — <b>'+avg+'%</b>. Ближе всего к выдаче: '+(lead?lead.name:'—')+'.'});
+  }
+  if((DETAIL||[]).length){
+    var by={}; DETAIL.forEach(function(t){ var k=t.owner; if(!by[k])by[k]={viz:0,ai:0}; if(t.part==='Альбом АИ')by[k].ai++; else by[k].viz++; });
+    var arr=Object.keys(by).map(function(n){return [n,by[n].viz+by[n].ai,by[n].viz,by[n].ai];}).sort(function(a,b){return b[1]-a[1];});
+    var top=arr[0];
+    if(top) out.push({tag:'ФАКТИЧЕСКОЕ ИСПОЛНЕНИЕ',cls:'good',html:'Больше всего разделов выполняет <b>'+top[0]+'</b> — <span class="n">'+top[1]+'</span> (Визуализация: '+top[2]+', Альбом АИ: '+top[3]+').'});
+    var aiByProj={}; DETAIL.filter(function(t){return t.part==='Альбом АИ';}).forEach(function(t){ if(!aiByProj[t.proj])aiByProj[t.proj]={}; aiByProj[t.proj][t.owner]=(aiByProj[t.proj][t.owner]||0)+1; });
+    var sole=null;
+    Object.keys(aiByProj).forEach(function(proj){ var e=Object.entries(aiByProj[proj]); if(e.length===1 && e[0][1]>=3 && !sole) sole={proj:proj,owner:e[0][0],n:e[0][1]}; });
+    if(sole) out.push({tag:'ЕДИНАЯ ТОЧКА · АИ',cls:'',html:'Весь «Альбом АИ» по проекту «'+sole.proj+'» ведёт <b>'+sole.owner+'</b> <span class="n">('+sole.n+'</span> разделов) — единоличная ответственность.'});
+    var vizTot=DETAIL.filter(function(t){return t.part!=='Альбом АИ';}).length, aiTot=DETAIL.filter(function(t){return t.part==='Альбом АИ';}).length;
+    out.push({tag:'БАЛАНС РАБОТ',cls:'',html:'Всего разделов в работе <span class="n">'+DETAIL.length+'</span>: Визуализация — <span class="n">'+vizTot+'</span>, Альбом АИ — <span class="n">'+aiTot+'</span>.'});
+  } else {
+    out.push({tag:'ДЕТАЛЬНЫЕ ДАННЫЕ',cls:'',html:'Выводы по фактическому исполнению появятся после загрузки детальных страниц проектов.'});
+  }
+  return out.map(function(o,i){return '<div class="icard rise" style="animation-delay:'+(i*.05)+'s"><div class="tag mono '+o.cls+'">'+o.tag+'</div><p>'+o.html+'</p></div>';}).join('');
+}
 function renderTeamDetail(){
   var bars=document.getElementById('teamDetailBars'), grid=document.getElementById('teamDetailGrid');
   if(!bars||!grid) return;
