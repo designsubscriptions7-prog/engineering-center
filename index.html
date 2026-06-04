@@ -950,21 +950,21 @@ function parseDetail(text){
   });
   function pi(m,names){for(const n of names){const i=m[norm(n)];if(i!=null)return i;}return -1;}
   const out=[];
-  function block(hdr,part,areaN,doneN,ownN,end){
+  function block(hdr,part,labelN,areaN,doneN,ownN,end){
     if(hdr<0)return; const m=colMap(rows[hdr]);
-    const oi=pi(m,ownN), ai=pi(m,areaN), di=pi(m,doneN);
-    if(oi<0)return;
+    const li=pi(m,labelN), oi=pi(m,ownN), ai=pi(m,areaN), di=pi(m,doneN);
+    if(oi<0||li<0)return;
     for(let i=hdr+1;i<end;i++){
       const r=rows[i]; if(!r)continue;
-      const label=String(r[0]||'').trim(); if(!label)continue;
+      const label=String(r[li]||'').trim(); if(!label)continue;
       const nl=norm(label);
       if(nl.startsWith('общий прогресс')||nl.includes('альбом аи')||nl.includes('визуализац')||nl.includes('вид работы')||nl.includes('помещение'))continue;
       const owner=String(r[oi]||'').trim(); if(!owner)continue;
       out.push({proj,part,label,owner,area:num(ai>=0?r[ai]:0),done:num(di>=0?r[di]:0)});
     }
   }
-  block(vizHdr,'Визуализация',['Площадь Виз'],['Выполнено Виз'],['Ответсвенный виз.','Ответственный виз.'], aiHdr>vizHdr?aiHdr-1:rows.length);
-  block(aiHdr,'Альбом АИ',['Площадь АИ'],['Выполнено АИ'],['Ответсвенный АИ','Ответственный АИ'], rows.length);
+  block(vizHdr,'Визуализация',['Помещение'],['Площадь Виз'],['Выполнено Виз'],['Ответсвенный виз.','Ответственный виз.'], aiHdr>vizHdr?aiHdr-1:rows.length);
+  block(aiHdr,'Альбом АИ',['Вид работы'],['Площадь АИ'],['Выполнено АИ'],['Ответсвенный АИ','Ответственный АИ'], rows.length);
   return out;
 }
 function parseCurrent(text){
