@@ -166,6 +166,11 @@ section{margin-top:42px}
 .kzmap{width:100%;height:auto;display:block}
 .kzmap .border{fill:var(--panel2);stroke:var(--line2);stroke-width:1.2;stroke-linejoin:round}
 .kz-note{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink2);display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+.kzmark text{pointer-events:none}
+.kztip{position:absolute;z-index:20;max-width:300px;background:var(--panel);border:1px solid var(--line2);border-radius:7px;box-shadow:0 10px 30px rgba(0,0,0,.16);padding:11px 13px;pointer-events:none;font-size:11.5px;color:var(--ink)}
+.kztip-h{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;color:var(--accent);margin-bottom:8px;text-transform:uppercase}
+.kztip-row{display:flex;align-items:flex-start;gap:7px;padding:3px 0;line-height:1.35;color:var(--ink2)}
+.kztip-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
 .kz-note b{color:var(--ink);font-weight:600}
 .kz-legend{display:flex;align-items:center;gap:8px;color:var(--ink3)}
 .ins{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
@@ -1023,11 +1028,39 @@ function renderMap(D){
     const lon=KZ_GEO[k][0],lat=KZ_GEO[k][1],c=counts[k],x=px(lon),y=py(lat);
     const r=11+Math.sqrt(c/maxC)*20, fill=c===maxC?'var(--orange)':'var(--navy)';
     const fs=Math.max(12,Math.min(20,r*0.72));
-    return `<g><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${fill}" fill-opacity="0.92"/>`+
+    return `<g class="kzmark" data-region="${k}" style="cursor:pointer"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${fill}" fill-opacity="0.92"/>`+
       `<text x="${x.toFixed(1)}" y="${(y+fs*0.35).toFixed(1)}" text-anchor="middle" fill="#fff" font-family="Archivo,sans-serif" font-size="${fs.toFixed(0)}" font-weight="700">${c}</text>`+
       `<text x="${x.toFixed(1)}" y="${(y+r+15).toFixed(1)}" text-anchor="middle" fill="var(--ink2)" font-family="Archivo,sans-serif" font-size="12" font-weight="600">${k}</text></g>`;
   }).join('');
   el.innerHTML=`<svg class="kzmap" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><path class="border" d="${path}"/>${markers}</svg>`;
+  // tooltip with project list per region
+  el.style.position='relative';
+  var tip=el.querySelector('.kztip'); if(!tip){ tip=document.createElement('div'); tip.className='kztip'; el.appendChild(tip); }
+  tip.style.display='none';
+  function showTip(region,cx,cy){
+    var list=D.filter(function(d){return d.city===region;});
+    if(!list.length){ tip.style.display='none'; return; }
+    var rows=list.map(function(p){
+      var nm=p.name.length>48?(p.name.slice(0,46)+'…'):p.name;
+      return '<div class="kztip-row"><span class="kztip-dot" style="background:'+(SC[p.status]||'var(--ink3)')+'"></span><span>'+nm+'</span></div>';
+    }).join('');
+    tip.innerHTML='<div class="kztip-h">'+region+' · '+list.length+'</div>'+rows;
+    tip.style.display='block';
+    var rc=el.getBoundingClientRect();
+    var x=cx-rc.left+14, y=cy-rc.top+14;
+    var tw=tip.offsetWidth, th=tip.offsetHeight;
+    if(x+tw>rc.width) x=Math.max(6,cx-rc.left-tw-14);
+    if(y+th>rc.height) y=Math.max(6,cy-rc.top-th-12);
+    tip.style.left=x+'px'; tip.style.top=y+'px';
+  }
+  el.querySelectorAll('.kzmark').forEach(function(g){
+    var region=g.getAttribute('data-region');
+    g.addEventListener('mouseenter',function(e){ showTip(region,e.clientX,e.clientY); });
+    g.addEventListener('mousemove',function(e){ showTip(region,e.clientX,e.clientY); });
+    g.addEventListener('mouseleave',function(){ tip.style.display='none'; });
+    g.addEventListener('click',function(e){ e.stopPropagation(); showTip(region,e.clientX,e.clientY); });
+  });
+  el.addEventListener('click',function(e){ if(!e.target.closest('.kzmark')) tip.style.display='none'; });
   const intl=D.filter(d=>KZ_INTL.includes(d.city));
   const totalKZ=regions.reduce((s,k)=>s+counts[k],0);
   const note=document.getElementById('kzNote');
