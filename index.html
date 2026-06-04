@@ -1116,7 +1116,13 @@ function fmtArea2(n){return Math.round(n).toLocaleString('ru-RU')+' м²';}
 function renderTeamDetail(){
   var bars=document.getElementById('teamDetailBars'), grid=document.getElementById('teamDetailGrid');
   if(!bars||!grid) return;
-  if(!DETAIL.length){ bars.innerHTML='<div class="note" style="padding:6px 2px">Детальные данные пока не загрузились — проверьте, что все 5 страниц опубликованы (Файл → Опубликовать в интернете).</div>'; grid.innerHTML=''; return; }
+  if(!DETAIL.length){
+    var d=window.__detailDiag||{tried:0,ok:0,fail:0,rows:0};
+    var msg='Детальные данные не распознаны. ';
+    if(d.ok===0){ msg+='Ни одна из '+d.tried+' страниц не открылась по ссылке — вероятно, они не опубликованы как CSV. Откройте: Файл → Поделиться → Опубликовать в интернете → выберите КАЖДЫЙ лист → формат CSV → Опубликовать.'; }
+    else { msg+='Страниц получено по ссылке: '+d.ok+' из '+d.tried+', но строк с исполнителями не найдено ('+d.rows+'). Возможно, формат страницы отличается от образца — пришлите скрин, поправлю разбор.'; }
+    bars.innerHTML='<div class="note" style="padding:6px 2px;line-height:1.55">'+msg+'</div>'; grid.innerHTML=''; return;
+  }
   var by={};
   DETAIL.forEach(function(t){ var k=t.owner; if(!by[k])by[k]={viz:{n:0,area:0,done:0},ai:{n:0,area:0,done:0}}; var b=(t.part==='Альбом АИ')?by[k].ai:by[k].viz; b.n++; b.area+=t.area; b.done+=t.done; });
   var arr=Object.keys(by).map(function(n){ var v=by[n].viz,a=by[n].ai; return {name:n,v:v,a:a,secN:v.n+a.n,area:v.area+a.area,
@@ -1166,8 +1172,10 @@ async function init(){
     if(CONFIG.currentCSV)   jobs.push(fetchText(CONFIG.currentCSV).then(t=>{const m=parseCurrent(t);if(m.length)CURRENT=m;}));
     if(jobs.length){await Promise.all(jobs);live=true;}
     if(Array.isArray(CONFIG.detailCSV)&&CONFIG.detailCSV.length){
-      const dres=await Promise.allSettled(CONFIG.detailCSV.map(u=>fetchText(u).then(parseDetail)));
-      DETAIL=[]; dres.forEach(r=>{ if(r.status==='fulfilled'&&Array.isArray(r.value)) DETAIL=DETAIL.concat(r.value); });
+      const dres=await Promise.allSettled(CONFIG.detailCSV.map(u=>fetchText(u).then(function(t){return {ok:true,rows:parseDetail(t)};},function(e){return {ok:false,err:String(e)};})));
+      DETAIL=[]; let okN=0,failN=0;
+      dres.forEach(function(r){ var val=r.value||{}; if(val.ok){okN++; if(Array.isArray(val.rows)) DETAIL=DETAIL.concat(val.rows);} else {failN++;} });
+      window.__detailDiag={tried:CONFIG.detailCSV.length,ok:okN,fail:failN,rows:DETAIL.length};
     }
   }catch(e){live=false;console.warn('Онлайн-данные недоступны, показан снимок:',e);}
   const src=document.getElementById('dataSource');
