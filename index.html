@@ -177,6 +177,30 @@ section{margin-top:42px}
 .icard p b{font-weight:600}
 .icard p .n{font-family:'IBM Plex Mono',monospace;color:var(--accent)}
 
+#teamLock .lockbox{max-width:420px;margin:30px auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:34px 30px;text-align:center}
+.lockicon{font-size:30px;margin-bottom:12px}
+.lockttl{font-size:18px;font-weight:600;color:var(--ink);margin-bottom:6px}
+.locksub{font-size:12.5px;color:var(--ink2);margin-bottom:20px;line-height:1.5}
+.lockrow{display:flex;gap:8px;justify-content:center}
+.lockrow input{flex:1;max-width:220px;padding:10px 13px;border:1px solid var(--line2);border-radius:6px;background:var(--panel2);color:var(--ink);font-size:14px;font-family:inherit;outline:none}
+.lockrow input:focus{border-color:var(--accent)}
+.lockrow button{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.05em;color:#fff;background:var(--navy);border:none;border-radius:6px;padding:10px 20px;cursor:pointer;transition:.18s}
+.lockrow button:hover{background:var(--orange)}
+.lockerr{margin-top:13px;font-size:12px;color:var(--hold);min-height:16px}
+.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.tcard{background:var(--panel);padding:20px 22px;display:flex;flex-direction:column;gap:10px}
+.tcard .tn{font-size:16px;font-weight:600;color:var(--ink)}
+.tcard .tr{font-size:11px;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;color:var(--accent)}
+.tcard .trow{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);border-top:1px solid var(--line);padding-top:7px}
+.tcard .trow b{color:var(--ink);font-weight:600}
+.tbar{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.tbar:last-child{border-bottom:none}
+.tbar .tbn{width:90px;font-size:12.5px;color:var(--ink);font-weight:500;flex-shrink:0}
+.tbar .tbt{flex:1;height:18px;background:var(--panel2);border-radius:3px;overflow:hidden}
+.tbar .tbt i{display:block;height:100%;background:var(--navy)}
+.tbar .tbv{width:118px;text-align:right;font-size:11.5px;color:var(--ink2);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+@media(max-width:860px){.tgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.tgrid{grid-template-columns:1fr}}
 .themebtn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--ink3);background:none;border:none;cursor:pointer;padding:0;text-transform:uppercase}
 .themebtn:hover{color:var(--accent)}
 footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;font-size:10px;color:var(--ink3);letter-spacing:.1em;font-family:'IBM Plex Mono',monospace}
@@ -315,6 +339,7 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
   <button type="button" class="tab on" data-view="current">ТЕКУЩИЕ ПРОЕКТЫ · В РАБОТЕ <span class="c">5</span></button>
   <button type="button" class="tab" data-view="portfolio">ПОРТФЕЛЬ · ЗАВЕРШЁННЫЕ <span class="c">25</span></button>
   <button type="button" class="tab" data-view="gallery">ВИЗУАЛИЗАЦИИ · CANVA <span class="c" id="galCount">0</span></button>
+  <button type="button" class="tab" data-view="team">КОМАНДА · НАГРУЗКА <span class="c" style="opacity:.7">🔒</span></button>
 </div>
 
 <div id="view-portfolio" hidden>
@@ -467,6 +492,48 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
     </div>
     <div class="gal" id="galGrid"></div>
   </section>
+</div>
+
+<div id="view-team" hidden>
+  <div id="teamLock">
+    <section style="margin-top:34px">
+      <div class="lockbox">
+        <div class="lockicon">🔒</div>
+        <div class="lockttl">Доступ ограничен</div>
+        <div class="locksub">Раздел нагрузки команды. Введите пароль для просмотра.</div>
+        <div class="lockrow">
+          <input type="password" id="teamPass" placeholder="пароль" autocomplete="off">
+          <button type="button" id="teamGo">Войти</button>
+        </div>
+        <div class="lockerr" id="teamErr"></div>
+      </div>
+    </section>
+  </div>
+  <div id="teamContent" hidden>
+    <section style="margin-top:34px">
+      <div class="shead">
+        <div><span class="idx mono">T / TEAM · ТЕКУЩАЯ НАГРУЗКА</span><h2 style="margin-top:6px">Нагрузка команды</h2></div>
+        <div class="note">Распределение текущих проектов по исполнителям. Работа делится на две части: Альбом АИ и Визуализация. Считается по проектам в работе (Сводный лист).</div>
+      </div>
+      <div class="kpis" id="teamKpis"></div>
+    </section>
+    <section>
+      <div class="shead"><div><span class="idx mono">T1 / LOAD</span><h2 style="margin-top:6px">Загрузка по площади в работе</h2></div></div>
+      <div class="card"><div id="teamBars"></div></div>
+    </section>
+    <section>
+      <div class="shead"><div><span class="idx mono">T2 / PEOPLE</span><h2 style="margin-top:6px">По исполнителям</h2></div></div>
+      <div class="tgrid" id="teamGrid"></div>
+    </section>
+    <section>
+      <div class="shead">
+        <div><span class="idx mono">T3 / DETAIL · ПО РАЗДЕЛАМ</span><h2 style="margin-top:6px">Детальная нагрузка</h2></div>
+        <div class="note">По детальным страницам проектов: разделы и площадь по каждому исполнителю — отдельно Визуализация и Альбом АИ.</div>
+      </div>
+      <div class="card"><div id="teamDetailBars"></div></div>
+      <div class="tgrid" id="teamDetailGrid" style="margin-top:1px"></div>
+    </section>
+  </div>
 </div>
 
 <footer>
@@ -797,6 +864,8 @@ _tabs.forEach(t=>t.addEventListener('click',()=>{
   document.getElementById('view-portfolio').hidden=(v!=='portfolio');
   document.getElementById('view-current').hidden=(v!=='current');
   const _g=document.getElementById('view-gallery'); if(_g) _g.hidden=(v!=='gallery');
+  const _t=document.getElementById('view-team'); if(_t) _t.hidden=(v!=='team');
+  if(v==='team') openTeam();
   currentView=v; setFooter(v);
   window.scrollTo({top:0,behavior:'smooth'});
 }));
@@ -830,8 +899,16 @@ if(_tg){
 ===================================================================== */
 const CONFIG={
   portfolioCSV:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1421922288&single=true&output=csv",
-  currentCSV:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1563839663&single=true&output=csv"
+  currentCSV:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1563839663&single=true&output=csv",
+  detailCSV:[
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1065117056&single=true&output=csv",
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1426132883&single=true&output=csv",
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=24519409&single=true&output=csv",
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=336409844&single=true&output=csv",
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=2111936756&single=true&output=csv"
+  ]
 };
+let DETAIL=[]; // tasks from detail pages
 
 const num=v=>{const n=parseFloat(String(v==null?'':v).replace(/\s/g,'').replace('%','').replace(',','.'));return isNaN(n)?0:n;};
 const pct01=v=>{const n=num(v);return n>1?n/100:n;};
@@ -862,6 +939,34 @@ function parsePortfolio(text){
   return out;
 }
 function splitArea(s){const p=String(s||'').split('/');return {done:num(p[0]),total:p.length>1?num(p[1]):0};}
+function parseDetail(text){
+  const rows=to2D(text);
+  let proj='';
+  for(let i=0;i<Math.min(3,rows.length);i++){ for(const c of (rows[i]||[])){ const s=String(c||'').trim(); if(s){proj=s;break;} } if(proj)break; }
+  let vizHdr=-1, aiHdr=-1;
+  rows.forEach((r,i)=>{ const j=(r||[]).map(norm);
+    if(vizHdr<0 && j.some(c=>c.includes('ответсвенный виз')||c.includes('ответственный виз'))) vizHdr=i;
+    if(aiHdr<0 && j.some(c=>c.includes('ответсвенный аи')||c.includes('ответственный аи'))) aiHdr=i;
+  });
+  function pi(m,names){for(const n of names){const i=m[norm(n)];if(i!=null)return i;}return -1;}
+  const out=[];
+  function block(hdr,part,areaN,doneN,ownN,end){
+    if(hdr<0)return; const m=colMap(rows[hdr]);
+    const oi=pi(m,ownN), ai=pi(m,areaN), di=pi(m,doneN);
+    if(oi<0)return;
+    for(let i=hdr+1;i<end;i++){
+      const r=rows[i]; if(!r)continue;
+      const label=String(r[0]||'').trim(); if(!label)continue;
+      const nl=norm(label);
+      if(nl.startsWith('общий прогресс')||nl.includes('альбом аи')||nl.includes('визуализац')||nl.includes('вид работы')||nl.includes('помещение'))continue;
+      const owner=String(r[oi]||'').trim(); if(!owner)continue;
+      out.push({proj,part,label,owner,area:num(ai>=0?r[ai]:0),done:num(di>=0?r[di]:0)});
+    }
+  }
+  block(vizHdr,'Визуализация',['Площадь Виз'],['Выполнено Виз'],['Ответсвенный виз.','Ответственный виз.'], aiHdr>vizHdr?aiHdr-1:rows.length);
+  block(aiHdr,'Альбом АИ',['Площадь АИ'],['Выполнено АИ'],['Ответсвенный АИ','Ответственный АИ'], rows.length);
+  return out;
+}
 function parseCurrent(text){
   const rows=to2D(text);
   const hi=findHeader(rows,['Название проекта','name']);
@@ -929,6 +1034,9 @@ function setFooter(view){
   const isUrl=s=>/^https?:\/\//i.test(String(s||'').trim())||/canva\.(com|link|site)/i.test(String(s||''));
   if(view==='current'){
     el.textContent=`ТЕКУЩИЕ ПРОЕКТЫ · ${CURRENT.length} В РАБОТЕ`;
+  } else if(view==='team'){
+    var ok=false; try{ok=sessionStorage.getItem('ec_team_ok')==='1';}catch(e){}
+    el.textContent=ok?('КОМАНДА · НАГРУЗКА · '+(window.__teamCount||0)+' ЧЕЛ.'):'КОМАНДА · ДОСТУП ОГРАНИЧЕН';
   } else if(view==='gallery'){
     const n=CURRENT.filter(p=>isUrl(p.canva)||isUrl(p.canvaAI)).length;
     el.textContent=`ВИЗУАЛИЗАЦИИ ТЕКУЩИХ ПРОЕКТОВ · ${n} ИЗ ${CURRENT.length} С CANVA`;
@@ -936,6 +1044,96 @@ function setFooter(view){
     const D=filtered();
     el.textContent=`ПОРТФЕЛЬ · ВЫБОРКА: ${D.length} / ${DATA.length}`;
   }
+}
+function openTeam(){
+  var ok=false; try{ok=sessionStorage.getItem('ec_team_ok')==='1';}catch(e){}
+  document.getElementById('teamLock').hidden=ok;
+  document.getElementById('teamContent').hidden=!ok;
+  if(ok) renderTeam();
+}
+(function(){
+  var go=document.getElementById('teamGo'), pass=document.getElementById('teamPass'), err=document.getElementById('teamErr');
+  if(!go) return;
+  function PW(){return atob('dGVhbTIwMjY=');}
+  function submit(){
+    if((pass.value||'').trim()===PW()){
+      try{sessionStorage.setItem('ec_team_ok','1');}catch(e){}
+      err.textContent=''; pass.value=''; openTeam(); setFooter('team');
+    } else { err.textContent='Неверный пароль'; }
+  }
+  go.addEventListener('click',submit);
+  pass.addEventListener('keydown',function(e){ if(e.key==='Enter') submit(); });
+})();
+function fmtArea(n){return Math.round(n).toLocaleString('ru-RU')+' м²';}
+function renderTeam(){
+  var people={};
+  function ens(n){ if(!n) return null; if(!people[n]) people[n]={name:n,viz:[],ai:[]}; return people[n]; }
+  CURRENT.forEach(function(p){
+    if(p.vizOwner) ens(p.vizOwner).viz.push(p);
+    if(p.aiOwner) ens(p.aiOwner).ai.push(p);
+  });
+  var arr=Object.keys(people).map(function(n){
+    var P=people[n];
+    var names={}; P.viz.concat(P.ai).forEach(function(p){names[p.name]=1;});
+    var active=Object.keys(names).length;
+    var area=0; P.viz.forEach(function(p){area+=(p.vizArea||0);}); P.ai.forEach(function(p){area+=(p.aiArea||0);});
+    var progs=[]; P.viz.forEach(function(p){progs.push(p.viz||0);}); P.ai.forEach(function(p){progs.push(p.ai||0);});
+    var avg=progs.length?Math.round(progs.reduce(function(a,b){return a+b;},0)/progs.length):0;
+    var dset={}; P.viz.concat(P.ai).forEach(function(p){ if((p.delay||0)>0) dset[p.name]=1; });
+    var roles=[]; if(P.ai.length) roles.push('Альбом АИ: '+P.ai.length); if(P.viz.length) roles.push('Визуализация: '+P.viz.length);
+    return {name:n,active:active,area:area,avg:avg,delayed:Object.keys(dset).length,roles:roles.join(' · '),vizN:P.viz.length,aiN:P.ai.length};
+  });
+  arr.sort(function(a,b){ return b.active-a.active || b.area-a.area; });
+  window.__teamCount=arr.length;
+  // KPIs
+  var totalAssign=arr.reduce(function(s,p){return s+p.active;},0);
+  var top=arr[0]?arr[0].name:'—';
+  var totalArea=arr.reduce(function(s,p){return s+p.area;},0);
+  document.getElementById('teamKpis').innerHTML=[
+    {l:'ИСПОЛНИТЕЛЕЙ',v:arr.length,m:'в текущих проектах'},
+    {l:'НАЗНАЧЕНИЙ',v:totalAssign,m:'роли на проектах'},
+    {l:'МАКС. НАГРУЗКА',v:top,m:(arr[0]?arr[0].active+' проектов':''),acc:true},
+    {l:'ПЛОЩАДЬ В РАБОТЕ',v:Math.round(totalArea/1000)+'k',m:'м² суммарно'}
+  ].map(function(k){return '<div class="kpi'+(k.acc?' acc':'')+'"><div class="lab mono">'+k.l+'</div><div class="val">'+k.v+'</div><div class="meta">'+k.m+'</div></div>';}).join('');
+  // load bars by area
+  var maxA=Math.max(1,...arr.map(function(p){return p.area;}));
+  document.getElementById('teamBars').innerHTML=arr.map(function(p){
+    var w=Math.round(p.area/maxA*100);
+    var col=p.name===arr[0].name?'var(--orange)':'var(--navy)';
+    return '<div class="tbar"><div class="tbn">'+p.name+'</div><div class="tbt"><i style="width:'+w+'%;background:'+col+'"></i></div><div class="tbv">'+fmtArea(p.area)+'</div></div>';
+  }).join('');
+  // cards
+  document.getElementById('teamGrid').innerHTML=arr.map(function(p){
+    return '<div class="tcard"><div class="tn">'+p.name+'</div><div class="tr">'+(p.roles||'—')+'</div>'+
+      '<div class="trow"><span>активных проектов</span><b>'+p.active+'</b></div>'+
+      '<div class="trow"><span>площадь в работе</span><b>'+fmtArea(p.area)+'</b></div>'+
+      '<div class="trow"><span>средний прогресс</span><b>'+p.avg+'%</b></div>'+
+      '<div class="trow"><span>с отставанием</span><b style="color:'+(p.delayed?'var(--hold)':'var(--ink)')+'">'+p.delayed+'</b></div></div>';
+  }).join('');
+  renderTeamDetail();
+}
+function fmtArea2(n){return Math.round(n).toLocaleString('ru-RU')+' м²';}
+function renderTeamDetail(){
+  var bars=document.getElementById('teamDetailBars'), grid=document.getElementById('teamDetailGrid');
+  if(!bars||!grid) return;
+  if(!DETAIL.length){ bars.innerHTML='<div class="note" style="padding:6px 2px">Детальные данные пока не загрузились — проверьте, что все 5 страниц опубликованы (Файл → Опубликовать в интернете).</div>'; grid.innerHTML=''; return; }
+  var by={};
+  DETAIL.forEach(function(t){ var k=t.owner; if(!by[k])by[k]={viz:{n:0,area:0,done:0},ai:{n:0,area:0,done:0}}; var b=(t.part==='Альбом АИ')?by[k].ai:by[k].viz; b.n++; b.area+=t.area; b.done+=t.done; });
+  var arr=Object.keys(by).map(function(n){ var v=by[n].viz,a=by[n].ai; return {name:n,v:v,a:a,secN:v.n+a.n,area:v.area+a.area,
+    vpct:v.area?Math.round(v.done/v.area*100):0, apct:a.area?Math.round(a.done/a.area*100):0}; });
+  arr.sort(function(x,y){return y.secN-x.secN || y.area-x.area;});
+  var maxN=Math.max(1,...arr.map(function(p){return p.secN;}));
+  bars.innerHTML=arr.map(function(p){ var w=Math.round(p.secN/maxN*100); var col=p.name===arr[0].name?'var(--orange)':'var(--navy)';
+    return '<div class="tbar"><div class="tbn">'+p.name+'</div><div class="tbt"><i style="width:'+w+'%;background:'+col+'"></i></div><div class="tbv">'+p.secN+' разд · '+fmtArea2(p.area)+'</div></div>';
+  }).join('');
+  grid.innerHTML=arr.map(function(p){
+    var viz=p.v.n?(p.v.n+' разд · '+fmtArea2(p.v.area)+' · '+p.vpct+'%'):'—';
+    var ai=p.a.n?(p.a.n+' разд · '+fmtArea2(p.a.area)+' · '+p.apct+'%'):'—';
+    return '<div class="tcard"><div class="tn">'+p.name+'</div>'+
+      '<div class="trow"><span>Визуализация</span><b>'+viz+'</b></div>'+
+      '<div class="trow"><span>Альбом АИ</span><b>'+ai+'</b></div>'+
+      '<div class="trow"><span>всего разделов</span><b>'+p.secN+'</b></div></div>';
+  }).join('');
 }
 function renderGallery(){
   const grid=document.getElementById('galGrid'); if(!grid) return;
@@ -967,10 +1165,15 @@ async function init(){
     if(CONFIG.portfolioCSV) jobs.push(fetchText(CONFIG.portfolioCSV).then(t=>{const m=parsePortfolio(t);if(m.length)DATA=m;}));
     if(CONFIG.currentCSV)   jobs.push(fetchText(CONFIG.currentCSV).then(t=>{const m=parseCurrent(t);if(m.length)CURRENT=m;}));
     if(jobs.length){await Promise.all(jobs);live=true;}
+    if(Array.isArray(CONFIG.detailCSV)&&CONFIG.detailCSV.length){
+      const dres=await Promise.allSettled(CONFIG.detailCSV.map(u=>fetchText(u).then(parseDetail)));
+      DETAIL=[]; dres.forEach(r=>{ if(r.status==='fulfilled'&&Array.isArray(r.value)) DETAIL=DETAIL.concat(r.value); });
+    }
   }catch(e){live=false;console.warn('Онлайн-данные недоступны, показан снимок:',e);}
   const src=document.getElementById('dataSource');
   if(src) src.textContent=(CONFIG.portfolioCSV||CONFIG.currentCSV)?(live?'источник: онлайн-таблица':'источник: снимок (нет связи)'):'источник: снимок';
   buildChips(); wireFilters(); render(); renderCurrent(); renderGallery(); setFooter();
+  if(currentView==='team') openTeam();
 }
 init();
 
