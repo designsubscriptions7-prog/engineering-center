@@ -880,9 +880,9 @@ function projDetail(name){ var n=norm(name); var r=(DETAIL||[]).filter(function(
 function detTable(title,rows,unitTh){
   if(!rows.length) return '<div class="pdt-h">'+title+'</div><div class="pdt-empty">нет данных</div>';
   var body=rows.map(function(r){ var pct=r.pct||(r.area?Math.round(r.done/r.area*100):0); pct=Math.round(pct);
-    return '<tr><td class="nm">'+r.label+'</td><td>'+(r.owner||'—')+'</td><td class="num">'+fmtNum2(r.done)+' / '+fmtNum2(r.area)+' м²</td><td class="num">'+pct+'%</td><td><span class="sd" style="background:'+stColor(r.status)+'"></span>'+(r.status||'—')+'</td></tr>';
+    return '<tr><td class="nm">'+r.label+'</td><td class="num">'+(r.due||'—')+'</td><td class="num">'+fmtNum2(r.done)+' / '+fmtNum2(r.area)+' м²</td><td class="num">'+pct+'%</td><td><span class="sd" style="background:'+stColor(r.status)+'"></span>'+(r.status||'—')+'</td></tr>';
   }).join('');
-  return '<div class="pdt-h">'+title+' · '+rows.length+'</div><table class="pdt"><thead><tr><th>'+unitTh+'</th><th>Исполнитель</th><th>Площадь</th><th>%</th><th>Статус</th></tr></thead><tbody>'+body+'</tbody></table>';
+  return '<div class="pdt-h">'+title+' · '+rows.length+'</div><table class="pdt"><thead><tr><th>'+unitTh+'</th><th>Выдача</th><th>Площадь</th><th>%</th><th>Статус</th></tr></thead><tbody>'+body+'</tbody></table>';
 }
 function projDetailHTML(name){
   if(!(DETAIL||[]).length) return '<div class="pdt-empty">Детальные данные не загружены (страницы проектов не опубликованы).</div>';
@@ -1055,9 +1055,9 @@ function parseDetail(text){
   });
   function pi(m,names){for(const n of names){const i=m[norm(n)];if(i!=null)return i;}return -1;}
   const out=[];
-  function block(hdr,part,labelN,areaN,doneN,ownN,pctN,end){
+  function block(hdr,part,labelN,areaN,doneN,ownN,pctN,dueN,end){
     if(hdr<0)return; const m=colMap(rows[hdr]);
-    const li=pi(m,labelN), oi=pi(m,ownN), ai=pi(m,areaN), di=pi(m,doneN), pcti=pi(m,pctN), sti=pi(m,['Статус','Сатус']);
+    const li=pi(m,labelN), oi=pi(m,ownN), ai=pi(m,areaN), di=pi(m,doneN), pcti=pi(m,pctN), sti=pi(m,['Статус','Сатус']), dui=pi(m,dueN);
     if(oi<0||li<0)return;
     for(let i=hdr+1;i<end;i++){
       const r=rows[i]; if(!r)continue;
@@ -1065,11 +1065,11 @@ function parseDetail(text){
       const nl=norm(label);
       if(nl.startsWith('общий прогресс')||nl.includes('альбом аи')||nl.includes('визуализац')||nl.includes('вид работы')||nl.includes('помещение'))continue;
       const owner=String(r[oi]||'').trim(); if(!owner)continue;
-      out.push({proj,part,label,owner,area:num(ai>=0?r[ai]:0),done:num(di>=0?r[di]:0),pct:num(pcti>=0?r[pcti]:0),status:String(sti>=0?r[sti]:'').trim()});
+      out.push({proj,part,label,owner,area:num(ai>=0?r[ai]:0),done:num(di>=0?r[di]:0),pct:num(pcti>=0?r[pcti]:0),status:String(sti>=0?r[sti]:'').trim(),due:String(dui>=0?r[dui]:'').trim()});
     }
   }
-  block(vizHdr,'Визуализация',['Помещение'],['Площадь Виз'],['Выполнено Виз'],['Ответсвенный виз.','Ответственный виз.'],['% Визуализации'], aiHdr>vizHdr?aiHdr-1:rows.length);
-  block(aiHdr,'Альбом АИ',['Вид работы'],['Площадь АИ'],['Выполнено АИ'],['Ответсвенный АИ','Ответственный АИ'],['% АИ'], rows.length);
+  block(vizHdr,'Визуализация',['Помещение'],['Площадь Виз'],['Выполнено Виз'],['Ответсвенный виз.','Ответственный виз.'],['% Визуализации'],['Выдача визуализации','Выдача'], aiHdr>vizHdr?aiHdr-1:rows.length);
+  block(aiHdr,'Альбом АИ',['Вид работы'],['Площадь АИ'],['Выполнено АИ'],['Ответсвенный АИ','Ответственный АИ'],['% АИ'],['Выдача АИ','Выдача'], rows.length);
   return out;
 }
 function parseCurrent(text){
