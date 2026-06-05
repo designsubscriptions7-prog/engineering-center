@@ -182,6 +182,22 @@ section{margin-top:64px}
 .icard p b{font-weight:600}
 .icard p .n{font-family:'IBM Plex Mono',monospace;color:var(--accent)}
 
+.pcard{cursor:pointer}
+.pmore{display:flex;align-items:center;justify-content:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);padding-top:8px;transition:color .2s}
+.pcard:hover .pmore{color:var(--accent)}
+.pmore .chev{transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.pcard.open .pmore .chev{transform:rotate(180deg)}
+.pdet{display:grid;grid-template-rows:0fr;transition:grid-template-rows .42s cubic-bezier(.2,.7,.2,1)}
+.pcard.open .pdet{grid-template-rows:1fr}
+.pdet-in{overflow:hidden;min-height:0}
+.pdt-h{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:14px 0 7px}
+.pdt{width:100%;border-collapse:collapse;font-size:10.5px}
+.pdt th{text-align:left;font-weight:500;color:var(--ink3);font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px 5px 0;border-bottom:1px solid var(--line2)}
+.pdt td{padding:5px 10px 5px 0;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top}
+.pdt td.nm{color:var(--ink);font-weight:500}
+.pdt td.num{font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.pdt .sd{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.pdt-empty{font-size:10.5px;color:var(--ink3);padding:6px 0}
 #teamLock .lockbox{max-width:420px;margin:30px auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:34px 30px;text-align:center}
 .lockicon{font-size:30px;margin-bottom:12px}
 .lockttl{font-size:18px;font-weight:600;color:var(--ink);margin-bottom:6px}
@@ -253,6 +269,8 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .kpi:hover{background:var(--panel2);box-shadow:0 10px 26px rgba(44,58,102,.07);z-index:1}
 .icard:hover,.tcard:hover{background:var(--panel2)}
 .gcard:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba(44,58,102,.13);z-index:1}
+.pcard{position:relative}
+.pcard:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(44,58,102,.12);z-index:1}
 .gcard .gthumb img{transition:transform .55s cubic-bezier(.2,.7,.2,1)}
 .gcard:hover .gthumb img{transform:scale(1.05)}
 .kzmark circle{transition:fill-opacity .2s ease}
@@ -856,6 +874,24 @@ function pline(lab,v,done,area,owner,col){
   const m2=area>0?`${fmtNum(done)} / ${fmtNum(area)} м²`:'не начато · 0 м²';
   return `<div class="pline"><div class="ph"><span class="lab">${lab}</span><span class="own">${owner} · ${p}%</span></div><div class="pbar"><i style="width:${p}%;background:${col}"></i></div><div class="pm2">${m2}</div></div>`;
 }
+function fmtNum2(n){return Math.round(n).toLocaleString('ru-RU');}
+function stColor(s){s=norm(s); if(s.indexOf('заверш')>=0)return 'var(--done)'; if(s.indexOf('работ')>=0)return 'var(--smr)'; return 'var(--ink3)';}
+function projDetail(name){ var n=norm(name); var r=(DETAIL||[]).filter(function(t){var p=norm(t.proj); return p===n||p.indexOf(n)>=0||n.indexOf(p)>=0;}); if(r.length)return r; var w=n.split(/\s+/)[0]; return (DETAIL||[]).filter(function(t){return norm(t.proj).split(/\s+/)[0]===w;}); }
+function detTable(title,rows,unitTh){
+  if(!rows.length) return '<div class="pdt-h">'+title+'</div><div class="pdt-empty">нет данных</div>';
+  var body=rows.map(function(r){ var pct=r.pct||(r.area?Math.round(r.done/r.area*100):0); pct=Math.round(pct);
+    return '<tr><td class="nm">'+r.label+'</td><td>'+(r.owner||'—')+'</td><td class="num">'+fmtNum2(r.done)+' / '+fmtNum2(r.area)+' м²</td><td class="num">'+pct+'%</td><td><span class="sd" style="background:'+stColor(r.status)+'"></span>'+(r.status||'—')+'</td></tr>';
+  }).join('');
+  return '<div class="pdt-h">'+title+' · '+rows.length+'</div><table class="pdt"><thead><tr><th>'+unitTh+'</th><th>Исполнитель</th><th>Площадь</th><th>%</th><th>Статус</th></tr></thead><tbody>'+body+'</tbody></table>';
+}
+function projDetailHTML(name){
+  if(!(DETAIL||[]).length) return '<div class="pdt-empty">Детальные данные не загружены (страницы проектов не опубликованы).</div>';
+  var d=projDetail(name);
+  if(!d.length) return '<div class="pdt-empty">Детализация для этого проекта не найдена на страницах.</div>';
+  var viz=d.filter(function(t){return t.part!=='Альбом АИ';});
+  var ai=d.filter(function(t){return t.part==='Альбом АИ';});
+  return detTable('Визуализация · помещения',viz,'Помещение')+detTable('Альбом АИ · разделы',ai,'Раздел');
+}
 function renderCurrent(){
   const C=CURRENT; const P=v=>Math.round(v*100);
   const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
@@ -889,8 +925,12 @@ function renderCurrent(){
         ${pline('АЛЬБОМ АИ',p.ai,p.aiDone,p.aiArea,p.aiOwner,'var(--accent)')}
       </div>
       <div class="foot"><span class="due">выдача<b>${fmtDate(p.due)}</b></span>
-        ${p.delay>0?`<span class="delay">⚠ отставание ${p.delay} дн</span>`:`<span class="ontime">● в графике</span>`}</div></div>`;
+        ${p.delay>0?`<span class="delay">⚠ отставание ${p.delay} дн</span>`:`<span class="ontime">● в графике</span>`}</div>
+      <div class="pmore">подробнее по листу <span class="chev">▾</span></div>
+      <div class="pdet"><div class="pdet-in">${projDetailHTML(p.name)}</div></div>
+    </div>`;
   }).join('');
+  (function(){ var cc=document.getElementById('cCards'); if(cc && !cc._wired){ cc._wired=true; cc.addEventListener('click',function(e){ if(e.target.closest('.pdet')) return; var card=e.target.closest('.pcard'); if(card) card.classList.toggle('open'); }); } })();
 
   const reg=[...C].sort((a,b)=>b.overall-a.overall);
   document.getElementById('cReg').innerHTML=`<thead><tr><th>№</th><th>НАЗВАНИЕ</th><th>ТИП</th><th>РЕГИОН</th><th>ОТВ. ВИЗ</th><th>ОТВ. АИ</th><th>ВИЗ</th><th>АИ</th><th>ОБЩИЙ</th><th>ВЫДАЧА</th><th>ОТСТ.</th></tr></thead><tbody>`+
@@ -1015,9 +1055,9 @@ function parseDetail(text){
   });
   function pi(m,names){for(const n of names){const i=m[norm(n)];if(i!=null)return i;}return -1;}
   const out=[];
-  function block(hdr,part,labelN,areaN,doneN,ownN,end){
+  function block(hdr,part,labelN,areaN,doneN,ownN,pctN,end){
     if(hdr<0)return; const m=colMap(rows[hdr]);
-    const li=pi(m,labelN), oi=pi(m,ownN), ai=pi(m,areaN), di=pi(m,doneN);
+    const li=pi(m,labelN), oi=pi(m,ownN), ai=pi(m,areaN), di=pi(m,doneN), pcti=pi(m,pctN), sti=pi(m,['Статус','Сатус']);
     if(oi<0||li<0)return;
     for(let i=hdr+1;i<end;i++){
       const r=rows[i]; if(!r)continue;
@@ -1025,11 +1065,11 @@ function parseDetail(text){
       const nl=norm(label);
       if(nl.startsWith('общий прогресс')||nl.includes('альбом аи')||nl.includes('визуализац')||nl.includes('вид работы')||nl.includes('помещение'))continue;
       const owner=String(r[oi]||'').trim(); if(!owner)continue;
-      out.push({proj,part,label,owner,area:num(ai>=0?r[ai]:0),done:num(di>=0?r[di]:0)});
+      out.push({proj,part,label,owner,area:num(ai>=0?r[ai]:0),done:num(di>=0?r[di]:0),pct:num(pcti>=0?r[pcti]:0),status:String(sti>=0?r[sti]:'').trim()});
     }
   }
-  block(vizHdr,'Визуализация',['Помещение'],['Площадь Виз'],['Выполнено Виз'],['Ответсвенный виз.','Ответственный виз.'], aiHdr>vizHdr?aiHdr-1:rows.length);
-  block(aiHdr,'Альбом АИ',['Вид работы'],['Площадь АИ'],['Выполнено АИ'],['Ответсвенный АИ','Ответственный АИ'], rows.length);
+  block(vizHdr,'Визуализация',['Помещение'],['Площадь Виз'],['Выполнено Виз'],['Ответсвенный виз.','Ответственный виз.'],['% Визуализации'], aiHdr>vizHdr?aiHdr-1:rows.length);
+  block(aiHdr,'Альбом АИ',['Вид работы'],['Площадь АИ'],['Выполнено АИ'],['Ответсвенный АИ','Ответственный АИ'],['% АИ'], rows.length);
   return out;
 }
 function parseCurrent(text){
