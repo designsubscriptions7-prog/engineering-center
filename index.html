@@ -1231,7 +1231,7 @@ function renderTeamDetail(){
     return arr;
   }
   // dual-bar block (m² primary, разделы secondary)
-  function block(title,arr){
+  function block(title,arr,unit){
     if(!arr.length) return '<div class="tblk"><div class="tblk-h">'+title+'</div><div class="note" style="padding:4px 2px">нет данных</div></div>';
     var maxA=Math.max(1,...arr.map(function(p){return p.area;}));
     var maxN=Math.max(1,...arr.map(function(p){return p.n;}));
@@ -1241,12 +1241,12 @@ function renderTeamDetail(){
       var aLabel=fmtArea2(p.area)+(p.area?(' · '+p.pct+'%'):'');
       return '<div class="tbar2"><div class="tbn">'+p.name+'</div><div class="tbcol">'+
         '<div class="tb2r"><span class="lab">м²</span><div class="tbt"><i style="width:'+wa+'%;background:'+col+'"></i></div><span class="v">'+aLabel+'</span></div>'+
-        '<div class="tb2r sub"><span class="lab">разд</span><div class="tbt"><i style="width:'+wn+'%;background:var(--navy);opacity:.5"></i></div><span class="v">'+p.n+' разд</span></div>'+
+        '<div class="tb2r sub"><span class="lab">'+unit+'</span><div class="tbt"><i style="width:'+wn+'%;background:var(--navy);opacity:.5"></i></div><span class="v">'+p.n+' '+unit+'</span></div>'+
         '</div></div>';
     }).join('');
     return '<div class="tblk"><div class="tblk-h">'+title+'</div>'+rows+'</div>';
   }
-  bars.innerHTML=block('Команда визуализации', agg(false))+block('Команда · Альбом АИ', agg(true));
+  bars.innerHTML=block('Команда визуализации', agg(false), 'помещ.')+block('Команда · Альбом АИ', agg(true), 'разд');
   grid.style.display='none';
 }
 function renderGallery(){
