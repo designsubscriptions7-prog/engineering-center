@@ -401,7 +401,7 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 </head>
 <body>
 <section class="hero" id="hero">
-  <video class="hero-vid" autoplay muted loop playsinline preload="auto">
+  <video id="heroVid" class="hero-vid" autoplay muted loop playsinline preload="auto">
     <source src="intro.mp4" type="video/mp4">
   </video>
   <div class="hero-bg"></div>
@@ -439,11 +439,6 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
   </div>
   </div>
   <div class="hright">
-    <div class="hvideo">
-      <video id="introVid" autoplay muted loop playsinline preload="auto">
-        <source src="intro.mp4" type="video/mp4">
-      </video>
-    </div>
     <div class="coords mono">51°10′N · 71°26′E<br>DATASET · ОТДЕЛ АИ<br>N=25 · 2023—2026<br>REV 2026.06</div>
   </div>
 </header>
@@ -1027,7 +1022,7 @@ const _tg=document.getElementById('themeToggle');
 function applyTheme(t){
   document.documentElement.dataset.theme=t;
   if(_tg) _tg.textContent=(t==='dark'?'DARK':'LIGHT');
-  var vid=document.getElementById('introVid');
+  var vid=document.getElementById('heroVid');
   if(vid){
     var src=(t==='dark'?'intro-dark.mp4':'intro.mp4');
     var cur=vid.querySelector('source');
