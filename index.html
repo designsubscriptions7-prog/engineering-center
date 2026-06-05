@@ -204,6 +204,21 @@ section{margin-top:42px}
 .tbar .tbt{flex:1;height:18px;background:var(--panel2);border-radius:3px;overflow:hidden}
 .tbar .tbt i{display:block;height:100%;background:var(--navy)}
 .tbar .tbv{width:118px;text-align:right;font-size:11.5px;color:var(--ink2);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+.tblk{padding:4px 0 2px}
+.tblk+.tblk{margin-top:22px;padding-top:20px;border-top:1px solid var(--line)}
+.tblk-h{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.tbar2{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.tbar2:last-child{border-bottom:none}
+.tbar2 .tbn{width:120px;font-size:12.5px;color:var(--ink);font-weight:500;flex-shrink:0}
+.tbar2 .tbcol{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
+.tb2r{display:flex;align-items:center;gap:10px}
+.tb2r .lab{width:30px;font-size:8.5px;font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--ink3);text-transform:uppercase;flex-shrink:0}
+.tb2r .tbt{flex:1;height:15px;background:var(--panel2);border-radius:3px;overflow:hidden;min-width:0}
+.tb2r.sub .tbt{height:9px}
+.tb2r .tbt i{display:block;height:100%}
+.tb2r .v{width:124px;text-align:right;font-size:11px;color:var(--ink2);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+.tb2r.sub .v{color:var(--ink3)}
+@media(max-width:560px){.tbar2{flex-direction:column;align-items:stretch;gap:7px}.tbar2 .tbn{width:auto}.tb2r .v{width:100px}}
 @media(max-width:860px){.tgrid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.tgrid{grid-template-columns:1fr}}
 .themebtn{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--ink3);background:none;border:none;cursor:pointer;padding:0;text-transform:uppercase}
@@ -1193,23 +1208,38 @@ function renderTeamDetail(){
     else { msg+='Страниц получено по ссылке: '+d.ok+' из '+d.tried+', но строк с исполнителями не найдено ('+d.rows+'). Возможно, формат страницы отличается от образца — пришлите скрин, поправлю разбор.'; }
     bars.innerHTML='<div class="note" style="padding:6px 2px;line-height:1.55">'+msg+'</div>'; grid.innerHTML=''; return;
   }
-  var by={};
-  DETAIL.forEach(function(t){ var k=t.owner; if(!by[k])by[k]={viz:{n:0,area:0,done:0},ai:{n:0,area:0,done:0}}; var b=(t.part==='Альбом АИ')?by[k].ai:by[k].viz; b.n++; b.area+=t.area; b.done+=t.done; });
-  var arr=Object.keys(by).map(function(n){ var v=by[n].viz,a=by[n].ai; return {name:n,v:v,a:a,secN:v.n+a.n,area:v.area+a.area,
-    vpct:v.area?Math.round(v.done/v.area*100):0, apct:a.area?Math.round(a.done/a.area*100):0}; });
-  arr.sort(function(x,y){return y.secN-x.secN || y.area-x.area;});
-  var maxN=Math.max(1,...arr.map(function(p){return p.secN;}));
-  bars.innerHTML=arr.map(function(p){ var w=Math.round(p.secN/maxN*100); var col=p.name===arr[0].name?'var(--orange)':'var(--navy)';
-    return '<div class="tbar"><div class="tbn">'+p.name+'</div><div class="tbt"><i style="width:'+w+'%;background:'+col+'"></i></div><div class="tbv">'+p.secN+' разд · '+fmtArea2(p.area)+'</div></div>';
-  }).join('');
-  grid.innerHTML=arr.map(function(p){
-    var viz=p.v.n?(p.v.n+' разд · '+fmtArea2(p.v.area)+' · '+p.vpct+'%'):'—';
-    var ai=p.a.n?(p.a.n+' разд · '+fmtArea2(p.a.area)+' · '+p.apct+'%'):'—';
-    return '<div class="tcard"><div class="tn">'+p.name+'</div>'+
-      '<div class="trow"><span>Визуализация</span><b>'+viz+'</b></div>'+
-      '<div class="trow"><span>Альбом АИ</span><b>'+ai+'</b></div>'+
-      '<div class="trow"><span>всего разделов</span><b>'+p.secN+'</b></div></div>';
-  }).join('');
+  // aggregate per person within one part ("viz" or "ai")
+  function agg(isAI){
+    var by={};
+    DETAIL.forEach(function(t){
+      var ai=(t.part==='Альбом АИ');
+      if(ai!==isAI) return;
+      var k=t.owner; if(!by[k])by[k]={n:0,area:0,done:0};
+      by[k].n++; by[k].area+=t.area; by[k].done+=t.done;
+    });
+    var arr=Object.keys(by).map(function(k){ var b=by[k];
+      return {name:k,n:b.n,area:b.area,done:b.done,pct:b.area?Math.round(b.done/b.area*100):0}; });
+    arr.sort(function(x,y){ return y.area-x.area || y.n-x.n; }); // площадь в приоритете
+    return arr;
+  }
+  // dual-bar block (m² primary, разделы secondary)
+  function block(title,arr){
+    if(!arr.length) return '<div class="tblk"><div class="tblk-h">'+title+'</div><div class="note" style="padding:4px 2px">нет данных</div></div>';
+    var maxA=Math.max(1,...arr.map(function(p){return p.area;}));
+    var maxN=Math.max(1,...arr.map(function(p){return p.n;}));
+    var rows=arr.map(function(p,i){
+      var wa=Math.round(p.area/maxA*100), wn=Math.round(p.n/maxN*100);
+      var col=(i===0)?'var(--orange)':'var(--navy)';
+      var aLabel=fmtArea2(p.area)+(p.area?(' · '+p.pct+'%'):'');
+      return '<div class="tbar2"><div class="tbn">'+p.name+'</div><div class="tbcol">'+
+        '<div class="tb2r"><span class="lab">м²</span><div class="tbt"><i style="width:'+wa+'%;background:'+col+'"></i></div><span class="v">'+aLabel+'</span></div>'+
+        '<div class="tb2r sub"><span class="lab">разд</span><div class="tbt"><i style="width:'+wn+'%;background:var(--navy);opacity:.5"></i></div><span class="v">'+p.n+' разд</span></div>'+
+        '</div></div>';
+    }).join('');
+    return '<div class="tblk"><div class="tblk-h">'+title+'</div>'+rows+'</div>';
+  }
+  bars.innerHTML=block('Команда визуализации', agg(false))+block('Команда · Альбом АИ', agg(true));
+  grid.style.display='none';
 }
 function renderGallery(){
   const grid=document.getElementById('galGrid'); if(!grid) return;
