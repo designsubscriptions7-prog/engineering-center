@@ -1147,7 +1147,8 @@ function renderTeam(){
     {l:'КУРАТОРОВ',v:arr.length,m:'в текущих проектах'},
     {l:'НАЗНАЧЕНИЙ',v:totalAssign,m:'роли на проектах'},
     {l:'МАКС. НАГРУЗКА',v:top,m:(arr[0]?arr[0].active+' проектов':''),acc:true},
-    {l:'ПЛОЩАДЬ В РАБОТЕ',v:Math.round(totalArea/1000)+'k',m:'м² суммарно'}
+    {l:'ПЛОЩАДЬ В РАБОТЕ',v:Math.round(totalArea/1000)+'k',m:'м² суммарно'},
+    (function(){var vz=(DETAIL||[]).filter(function(t){return t.part!=='Альбом АИ';}).length; var ai=(DETAIL||[]).filter(function(t){return t.part==='Альбом АИ';}).length; return {l:'ОБЪЁМ РАБОТ',v:(vz+ai),m:vz+' помещ. · '+ai+' разд'};})()
   ].map(function(k){return '<div class="kpi'+(k.acc?' acc':'')+'"><div class="lab mono">'+k.l+'</div><div class="val">'+k.v+'</div><div class="meta">'+k.m+'</div></div>';}).join('');
   // split curators by direction (Виз / Альбом АИ)
   function aggCur(isAI){
