@@ -538,12 +538,11 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
       <div class="kpis" id="teamKpis"></div>
     </section>
     <section>
-      <div class="shead"><div><span class="idx mono">T1 / LOAD</span><h2 style="margin-top:6px">Загрузка кураторов · по площади</h2></div></div>
+      <div class="shead">
+        <div><span class="idx mono">T1 / CURATORS · ПО НАПРАВЛЕНИЯМ</span><h2 style="margin-top:6px">Кураторы проектов</h2></div>
+        <div class="note">Ответственные за проекты, разделённые на Визуализацию и Альбом АИ. Полосы: площадь (в приоритете) и число проектов.</div>
+      </div>
       <div class="card"><div id="teamBars"></div></div>
-    </section>
-    <section>
-      <div class="shead"><div><span class="idx mono">T2 / CURATORS</span><h2 style="margin-top:6px">Кураторы проектов</h2></div></div>
-      <div class="tgrid" id="teamGrid"></div>
     </section>
     <section>
       <div class="shead">
@@ -1145,26 +1144,35 @@ function renderTeam(){
   var top=arr[0]?arr[0].name:'—';
   var totalArea=arr.reduce(function(s,p){return s+p.area;},0);
   document.getElementById('teamKpis').innerHTML=[
-    {l:'ИСПОЛНИТЕЛЕЙ',v:arr.length,m:'в текущих проектах'},
+    {l:'КУРАТОРОВ',v:arr.length,m:'в текущих проектах'},
     {l:'НАЗНАЧЕНИЙ',v:totalAssign,m:'роли на проектах'},
     {l:'МАКС. НАГРУЗКА',v:top,m:(arr[0]?arr[0].active+' проектов':''),acc:true},
     {l:'ПЛОЩАДЬ В РАБОТЕ',v:Math.round(totalArea/1000)+'k',m:'м² суммарно'}
   ].map(function(k){return '<div class="kpi'+(k.acc?' acc':'')+'"><div class="lab mono">'+k.l+'</div><div class="val">'+k.v+'</div><div class="meta">'+k.m+'</div></div>';}).join('');
-  // load bars by area
-  var maxA=Math.max(1,...arr.map(function(p){return p.area;}));
-  document.getElementById('teamBars').innerHTML=arr.map(function(p){
-    var w=Math.round(p.area/maxA*100);
-    var col=p.name===arr[0].name?'var(--orange)':'var(--navy)';
-    return '<div class="tbar"><div class="tbn">'+p.name+'</div><div class="tbt"><i style="width:'+w+'%;background:'+col+'"></i></div><div class="tbv">'+fmtArea(p.area)+'</div></div>';
-  }).join('');
-  // cards
-  document.getElementById('teamGrid').innerHTML=arr.map(function(p){
-    return '<div class="tcard"><div class="tn">'+p.name+'</div><div class="tr">'+(p.roles||'—')+'</div>'+
-      '<div class="trow"><span>активных проектов</span><b>'+p.active+'</b></div>'+
-      '<div class="trow"><span>площадь в работе</span><b>'+fmtArea(p.area)+'</b></div>'+
-      '<div class="trow"><span>средний прогресс</span><b>'+p.avg+'%</b></div>'+
-      '<div class="trow"><span>с отставанием</span><b style="color:'+(p.delayed?'var(--hold)':'var(--ink)')+'">'+p.delayed+'</b></div></div>';
-  }).join('');
+  // split curators by direction (Виз / Альбом АИ)
+  function aggCur(isAI){
+    var by={};
+    CURRENT.forEach(function(p){
+      var owner=isAI?p.aiOwner:p.vizOwner; if(!owner) return;
+      var ar=isAI?(p.aiArea||0):(p.vizArea||0);
+      var pr=isAI?(p.ai||0):(p.viz||0);
+      if(!by[owner])by[owner]={n:0,area:0,progs:[]};
+      by[owner].n++; by[owner].area+=ar; by[owner].progs.push(pr);
+    });
+    return Object.keys(by).map(function(k){var b=by[k];var avg=b.progs.length?Math.round(b.progs.reduce(function(a,c){return a+c;},0)/b.progs.length*100):0;return {name:k,n:b.n,area:b.area,avg:avg};}).sort(function(x,y){return y.area-x.area||y.n-x.n;});
+  }
+  function curBlock(title,a){
+    if(!a.length) return '<div class="tblk"><div class="tblk-h">'+title+'</div><div class="note" style="padding:4px 2px">нет данных</div></div>';
+    var mA=Math.max(1,...a.map(function(p){return p.area;})), mN=Math.max(1,...a.map(function(p){return p.n;}));
+    var rows=a.map(function(p,i){var wa=Math.round(p.area/mA*100),wn=Math.round(p.n/mN*100);var col=(i===0)?'var(--orange)':'var(--navy)';
+      return '<div class="tbar2"><div class="tbn">'+p.name+'</div><div class="tbcol">'+
+        '<div class="tb2r"><span class="lab">м²</span><div class="tbt"><i style="width:'+wa+'%;background:'+col+'"></i></div><span class="v">'+fmtArea2(p.area)+' · '+p.avg+'%</span></div>'+
+        '<div class="tb2r sub"><span class="lab">пр.</span><div class="tbt"><i style="width:'+wn+'%;background:var(--navy);opacity:.5"></i></div><span class="v">'+p.n+' проект.</span></div>'+
+        '</div></div>';
+    }).join('');
+    return '<div class="tblk"><div class="tblk-h">'+title+'</div>'+rows+'</div>';
+  }
+  document.getElementById('teamBars').innerHTML=curBlock('Кураторы визуализации',aggCur(false))+curBlock('Кураторы · Альбом АИ',aggCur(true));
   renderTeamDetail();
   var ti=document.getElementById('teamInsights'); if(ti) ti.innerHTML=buildTeamInsights();
 }
