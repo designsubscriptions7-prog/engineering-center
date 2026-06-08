@@ -354,6 +354,8 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .upd-t span{color:var(--ink2)}
 .upd-m{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink2);margin-top:4px;letter-spacing:.02em}
 .upd-m b{color:var(--accent)}
+.upd-m .ust{color:var(--ink2)}
+.upd-m .ust .sd{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle}
 .corrnote{margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.03em;color:var(--ink2);padding:8px 11px;background:var(--panel2);border-left:2px solid var(--accent);border-radius:3px}
 .corrnote b{color:var(--ink)}
 .pline .pm2{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink3);margin-top:5px;letter-spacing:.03em}
@@ -611,6 +613,22 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
       <div class="note">Корректировки с изменением даты выдачи за последние 7 дней — по столбцу «Дата выдачи» детальных листов.</div>
     </div>
     <div class="card"><div id="cUpdates"></div></div>
+  </section>
+
+  <section>
+    <div class="shead">
+      <div><span class="idx mono">A3 / DELIVERED · 7 ДНЕЙ</span><h2 style="margin-top:6px">Сдано за неделю</h2></div>
+      <div class="note">Помещения и разделы с плановой выдачей за последние 7 дней — что должно было быть выдано, со статусом.</div>
+    </div>
+    <div class="card"><div id="cDelivered"></div></div>
+  </section>
+
+  <section>
+    <div class="shead">
+      <div><span class="idx mono">A4 / UPCOMING · 7 ДНЕЙ</span><h2 style="margin-top:6px">К выдаче — неделя вперёд</h2></div>
+      <div class="note">Что запланировано к выдаче в ближайшие 7 дней по плановым датам выдачи.</div>
+    </div>
+    <div class="card"><div id="cUpcoming"></div></div>
   </section>
 
   <section>
@@ -990,6 +1008,34 @@ function parseRuDate(s){
   return null;
 }
 function dChip(d){ return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
+function renderDue(){
+  var hostD=document.getElementById('cDelivered'), hostU=document.getElementById('cUpcoming');
+  if(!hostD||!hostU) return;
+  var today=new Date(); today.setHours(0,0,0,0);
+  var back=new Date(today); back.setDate(back.getDate()-7);
+  var fwd=new Date(today); fwd.setHours(23,59,59,0); fwd.setDate(fwd.getDate()+7);
+  var all=[];
+  (DETAIL||[]).forEach(function(t){
+    var d=parseRuDate(t.due); if(!d) return;
+    var pct=t.pct||(t.area?Math.round(t.done/t.area*100):0);
+    all.push({proj:t.proj,part:t.part,label:t.label,date:d,status:t.status,pct:Math.round(pct)});
+  });
+  function rowHtml(x){
+    return '<div class="upd"><div class="upd-d">'+dChip(x.date)+'</div>'+
+      '<div class="upd-b"><div class="upd-t"><b>'+x.proj+'</b> · <span>'+x.label+'</span></div>'+
+      '<div class="upd-m">'+(x.part==='Альбом АИ'?'Альбом АИ':'Визуализация')+' · '+x.pct+'%'+
+      ' · <span class="ust"><span class="sd" style="background:'+stColor(x.status)+'"></span>'+(x.status||'—')+'</span></div></div></div>';
+  }
+  if(!all.length){
+    hostD.innerHTML='<div class="note" style="padding:4px 2px">Плановых дат выдачи в детальных листах не найдено.</div>';
+    hostU.innerHTML='<div class="note" style="padding:4px 2px">Плановых дат выдачи в детальных листах не найдено.</div>';
+    return;
+  }
+  var delivered=all.filter(function(x){ return x.date>=back && x.date<=today; }).sort(function(a,b){ return b.date-a.date; });
+  var upcoming=all.filter(function(x){ return x.date>today && x.date<=fwd; }).sort(function(a,b){ return a.date-b.date; });
+  hostD.innerHTML=delivered.length?('<div class="upd-h">За последние 7 дней · '+delivered.length+'</div>'+delivered.map(rowHtml).join('')):'<div class="note" style="padding:4px 2px">За последние 7 дней плановых выдач не было.</div>';
+  hostU.innerHTML=upcoming.length?('<div class="upd-h">Ближайшие 7 дней · '+upcoming.length+'</div>'+upcoming.map(rowHtml).join('')):'<div class="note" style="padding:4px 2px">На ближайшие 7 дней выдач не запланировано.</div>';
+}
 function renderUpdates(){
   var host=document.getElementById('cUpdates'); if(!host) return;
   var now=new Date(); now.setHours(23,59,59,0);
@@ -1052,6 +1098,7 @@ function renderCurrent(){
   }).join('');
   (function(){ var cc=document.getElementById('cCards'); if(cc && !cc._wired){ cc._wired=true; cc.addEventListener('click',function(e){ if(e.target.closest('.pdet')) return; var card=e.target.closest('.pcard'); if(card) card.classList.toggle('open'); }); } })();
   renderUpdates();
+  renderDue();
 
   const reg=[...C].sort((a,b)=>b.overall-a.overall);
   document.getElementById('cReg').innerHTML=`<thead><tr><th>№</th><th>НАЗВАНИЕ</th><th>ТИП</th><th>РЕГИОН</th><th>ОТВ. ВИЗ</th><th>ОТВ. АИ</th><th>ВИЗ</th><th>АИ</th><th>ОБЩИЙ</th><th>ВЫДАЧА</th><th>ОТСТ.</th></tr></thead><tbody>`+
