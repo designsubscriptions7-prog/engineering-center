@@ -1170,9 +1170,9 @@ function parseCurrent(text){
     const vizCorr=vcRaw!==''?pct01(vcRaw):0, aiCorr=acRaw!==''?pct01(acRaw):0;
     const _cl=x=>Math.max(0,Math.min(1,x));
     const vizFact=_cl(viz-vizCorr/2), aiFact=_cl(ai-aiCorr/2);
-    const _tot=vizArea+aiArea;
-    const overallFact=_tot>0?(vizFact*vizArea+aiFact*aiArea)/_tot:(vizFact+aiFact)/2;
-    const overallCorr=_tot>0?(vizCorr*vizArea+aiCorr*aiArea)/_tot:(vizCorr+aiCorr)/2;
+    const _hasV=vizArea>0, _hasA=aiArea>0;
+    const overallFact=(_hasV&&_hasA)?(vizFact+aiFact)/2:(_hasV?vizFact:(_hasA?aiFact:(vizFact+aiFact)/2));
+    const overallCorr=(_hasV&&_hasA)?(vizCorr+aiCorr)/2:(_hasV?vizCorr:(_hasA?aiCorr:(vizCorr+aiCorr)/2));
     out.push({id:out.length+1,name,vizCorr,aiCorr,vizFact,aiFact,overallFact,overallCorr,
       region:pick(r,m,['Регион','region']),
       type:pick(r,m,['Тип','type']),
