@@ -339,8 +339,12 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .pline .ph{display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px}
 .pline .ph .lab{color:var(--ink2);letter-spacing:.08em}
 .pline .ph .own{color:var(--ink3);font-family:'IBM Plex Mono',monospace;font-size:10px}
-.pline .pbar{height:7px;background:var(--line2);border-radius:2px;overflow:hidden}
-.pline .pbar i{display:block;height:100%;border-radius:2px;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+.pline .pbar{position:relative;height:7px;background:var(--line2);border-radius:2px;overflow:hidden}
+.pline .pbar .fill{position:absolute;left:0;top:0;height:100%;border-radius:2px;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+.pline .pbar .corr{position:absolute;top:0;height:100%;background-image:repeating-linear-gradient(45deg,rgba(232,120,40,.65) 0,rgba(232,120,40,.65) 3px,rgba(232,120,40,.14) 3px,rgba(232,120,40,.14) 6px)}
+.corrtag{color:var(--accent);font-family:'IBM Plex Mono',monospace}
+.corrnote{margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.03em;color:var(--ink2);padding:8px 11px;background:var(--panel2);border-left:2px solid var(--accent);border-radius:3px}
+.corrnote b{color:var(--ink)}
 .pline .pm2{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink3);margin-top:5px;letter-spacing:.03em}
 .pcard .foot{display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid var(--line);font-size:11px}
 .pcard .foot .due{color:var(--ink2)}
@@ -923,10 +927,17 @@ function fmtDate(s){
   if(mm=s.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})$/)){let a=+mm[1],b=+mm[2],day,mon;if(a>12){day=a;mon=b;}else{mon=a;day=b;}return pad2(day)+'.'+pad2(mon)+'.'+mm[3].slice(2);}
   return s;
 }
-function pline(lab,v,done,area,owner,col){
-  const p=Math.round(v*100);
+function pline(lab,v,done,area,owner,col,corr){
+  corr=corr||0;
+  const cl=x=>Math.max(0,Math.min(1,x));
+  const fact=cl(v-corr/2);
+  const pf=Math.round(fact*100), pn=Math.round(v*100), pc=Math.round(corr*100);
+  const deltaW=Math.max(0,pn-pf);
   const m2=area>0?`${fmtNum(done)} / ${fmtNum(area)} м²`:'не начато · 0 м²';
-  return `<div class="pline"><div class="ph"><span class="lab">${lab}</span><span class="own">${owner} · ${p}%</span></div><div class="pbar"><i style="width:${p}%;background:${col}"></i></div><div class="pm2">${m2}</div></div>`;
+  const corrTag=corr>0?` · <span class="corrtag">корр ${pc}% · было ${pn}%</span>`:'';
+  return `<div class="pline"><div class="ph"><span class="lab">${lab}</span><span class="own">${owner} · ${pf}%</span></div>`+
+    `<div class="pbar"><i class="fill" style="width:${pf}%;background:${col}"></i>${deltaW>0?`<i class="corr" style="left:${pf}%;width:${deltaW}%"></i>`:''}</div>`+
+    `<div class="pm2">${m2}${corrTag}</div></div>`;
 }
 function fmtNum2(n){return Math.round(n).toLocaleString('ru-RU');}
 function stColor(s){s=norm(s); if(s.indexOf('заверш')>=0)return 'var(--done)'; if(s.indexOf('работ')>=0)return 'var(--smr)'; return 'var(--ink3)';}
@@ -949,7 +960,7 @@ function projDetailHTML(name){
 function renderCurrent(){
   const C=CURRENT; const P=v=>Math.round(v*100);
   const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
-  const avgO=mean(C.map(p=>p.overall)),avgV=mean(C.map(p=>p.viz)),avgA=mean(C.map(p=>p.ai));
+  const avgO=mean(C.map(p=>p.overallFact)),avgV=mean(C.map(p=>p.vizFact)),avgA=mean(C.map(p=>p.aiFact));
   const delayed=C.filter(p=>p.delay>0).length;
   const vizArea=C.reduce((s,p)=>s+p.vizArea,0), aiArea=C.reduce((s,p)=>s+p.aiArea,0);
   const fmtK=n=>n>=1000?(n/1000).toFixed(1):String(Math.round(n));
@@ -966,18 +977,19 @@ function renderCurrent(){
       <div class="meta">${k.meta}</div><div class="bar"><i style="width:${Math.min(k.bar,100)}%;background:${k.col}"></i></div></div>`).join('');
 
   document.getElementById('cCards').innerHTML=C.map((p,i)=>{
-    const c=2*Math.PI*30, off=c*(1-p.overall), oc=pcolC(p.overall);
+    const c=2*Math.PI*30, off=c*(1-p.overallFact), oc=pcolC(p.overallFact);
     return `<div class="pcard rise" style="animation-delay:${i*.06}s">
       <div class="top"><div><div class="pn">${p.name}</div>
         <div class="pmeta"><span class="tt">${p.type}</span><span>${p.region}</span></div></div>
         <div class="ring"><svg width="70" height="70">
           <circle cx="35" cy="35" r="30" fill="none" stroke="var(--line2)" stroke-width="5"/>
           <circle cx="35" cy="35" r="30" fill="none" stroke="${oc}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
-        </svg><div class="rt" style="color:${oc}">${P(p.overall)}%</div></div></div>
+        </svg><div class="rt" style="color:${oc}">${P(p.overallFact)}%</div></div></div>
       <div class="prog">
-        ${pline('ВИЗУАЛИЗАЦИЯ',p.viz,p.vizDone,p.vizArea,p.vizOwner,'var(--psd)')}
-        ${pline('АЛЬБОМ АИ',p.ai,p.aiDone,p.aiArea,p.aiOwner,'var(--accent)')}
+        ${pline('ВИЗУАЛИЗАЦИЯ',p.viz,p.vizDone,p.vizArea,p.vizOwner,'var(--psd)',p.vizCorr)}
+        ${pline('АЛЬБОМ АИ',p.ai,p.aiDone,p.aiArea,p.aiOwner,'var(--accent)',p.aiCorr)}
       </div>
+      ${(p.vizCorr||p.aiCorr)?`<div class="corrnote">● факт с учётом корректировок: <b>${P(p.overallFact)}%</b> · виз ${P(p.vizFact)}% · аи ${P(p.aiFact)}%</div>`:''}
       <div class="foot"><span class="due">выдача<b>${fmtDate(p.due)}</b></span>
         ${p.delay>0?`<span class="delay">⚠ отставание ${p.delay} дн</span>`:`<span class="ontime">● в графике</span>`}</div>
       <div class="pmore">подробнее по листу <span class="chev">▾</span></div>
@@ -1148,7 +1160,15 @@ function parseCurrent(text){
     const viz=vRaw!==''?pct01(vRaw):(vizArea?vizDone/vizArea:0);
     const ai=aRaw!==''?pct01(aRaw):(aiArea?aiDone/aiArea:0);
     const overall=oRaw!==''?pct01(oRaw):(viz+ai)/2;
-    out.push({id:out.length+1,name,
+    const vcRaw=pick(r,m,['% Корректировки виз','% Корректировки Виз','% Корректировки визуализации','Корректировка виз','Корректировка Виз','% корр виз']);
+    const acRaw=pick(r,m,['% Корректировки АИ','% Корректировки аи','Корректировка АИ','% корр аи']);
+    const vizCorr=vcRaw!==''?pct01(vcRaw):0, aiCorr=acRaw!==''?pct01(acRaw):0;
+    const _cl=x=>Math.max(0,Math.min(1,x));
+    const vizFact=_cl(viz-vizCorr/2), aiFact=_cl(ai-aiCorr/2);
+    const _tot=vizArea+aiArea;
+    const overallFact=_tot>0?(vizFact*vizArea+aiFact*aiArea)/_tot:(vizFact+aiFact)/2;
+    const overallCorr=_tot>0?(vizCorr*vizArea+aiCorr*aiArea)/_tot:(vizCorr+aiCorr)/2;
+    out.push({id:out.length+1,name,vizCorr,aiCorr,vizFact,aiFact,overallFact,overallCorr,
       region:pick(r,m,['Регион','region']),
       type:pick(r,m,['Тип','type']),
       vizOwner:pick(r,m,['Ответсвенный виз.','Ответственный виз.','vizOwner']),
