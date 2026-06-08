@@ -345,6 +345,8 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .pline .pbar .corr{position:absolute;top:0;height:100%;background-image:repeating-linear-gradient(45deg,rgba(232,120,40,.65) 0,rgba(232,120,40,.65) 3px,rgba(232,120,40,.14) 3px,rgba(232,120,40,.14) 6px)}
 .corrtag{color:var(--accent);font-family:'IBM Plex Mono',monospace}
 .upd-h{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.updblk+.updblk{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.updblk-h{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
 .upd{display:flex;gap:16px;padding:13px 0;border-bottom:1px solid var(--line);align-items:baseline}
 .upd:last-child{border-bottom:none}
 .upd-d{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink);font-weight:600;width:46px;flex-shrink:0}
@@ -609,24 +611,24 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 
   <section>
     <div class="shead">
-      <div><span class="idx mono">A2 / UPDATES · 7 ДНЕЙ</span><h2 style="margin-top:6px">Обновления за неделю</h2></div>
-      <div class="note">Корректировки с изменением даты выдачи за последние 7 дней — по столбцу «Дата выдачи» детальных листов.</div>
-    </div>
-    <div class="card"><div id="cUpdates"></div></div>
-  </section>
-
-  <section>
-    <div class="shead">
-      <div><span class="idx mono">A3 / DELIVERED · 7 ДНЕЙ</span><h2 style="margin-top:6px">Сдано за неделю</h2></div>
-      <div class="note">Помещения и разделы с плановой выдачей за последние 7 дней — что должно было быть выдано, со статусом.</div>
+      <div><span class="idx mono">A2 / DELIVERED · 7 ДНЕЙ</span><h2 style="margin-top:6px">Сдано за неделю</h2></div>
+      <div class="note">Помещения и разделы с плановой выдачей за последние 7 дней — что должно было быть выдано, со статусом. Разбито на Визуализацию и Альбом АИ.</div>
     </div>
     <div class="card"><div id="cDelivered"></div></div>
   </section>
 
   <section>
     <div class="shead">
+      <div><span class="idx mono">A3 / CORRECTIONS · 7 ДНЕЙ</span><h2 style="margin-top:6px">Корректировки за неделю</h2></div>
+      <div class="note">Корректировки с изменением даты выдачи за последние 7 дней — по столбцу «Дата выдачи» детальных листов. Разбито на Визуализацию и Альбом АИ.</div>
+    </div>
+    <div class="card"><div id="cUpdates"></div></div>
+  </section>
+
+  <section>
+    <div class="shead">
       <div><span class="idx mono">A4 / UPCOMING · 7 ДНЕЙ</span><h2 style="margin-top:6px">К выдаче — неделя вперёд</h2></div>
-      <div class="note">Что запланировано к выдаче в ближайшие 7 дней по плановым датам выдачи.</div>
+      <div class="note">Что запланировано к выдаче в ближайшие 7 дней по плановым датам выдачи. Разбито на Визуализацию и Альбом АИ.</div>
     </div>
     <div class="card"><div id="cUpcoming"></div></div>
   </section>
@@ -1020,6 +1022,17 @@ function parseRuDate(s){
   return null;
 }
 function dChip(d){ return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
+function splitBlocks(list,rowFn){
+  function blk(title,arr){
+    if(!arr.length) return '';
+    arr.sort(function(a,b){ return String(a.proj||'').localeCompare(String(b.proj||''),'ru') || String(a.label||'').localeCompare(String(b.label||''),'ru'); });
+    return '<div class="updblk"><div class="updblk-h">'+title+' · '+arr.length+'</div>'+arr.map(rowFn).join('')+'</div>';
+  }
+  var viz=list.filter(function(x){return x.part!=='Альбом АИ';});
+  var ai=list.filter(function(x){return x.part==='Альбом АИ';});
+  var html=blk('Визуализация',viz)+blk('Альбом АИ',ai);
+  return html;
+}
 function renderDue(){
   var hostD=document.getElementById('cDelivered'), hostU=document.getElementById('cUpcoming');
   if(!hostD||!hostU) return;
@@ -1035,18 +1048,19 @@ function renderDue(){
   function rowHtml(x){
     return '<div class="upd"><div class="upd-d">'+dChip(x.date)+'</div>'+
       '<div class="upd-b"><div class="upd-t"><b>'+x.proj+'</b> · <span>'+x.label+'</span></div>'+
-      '<div class="upd-m">'+(x.part==='Альбом АИ'?'Альбом АИ':'Визуализация')+' · '+x.pct+'%'+
-      ' · <span class="ust"><span class="sd" style="background:'+stColor(x.status)+'"></span>'+(x.status||'—')+'</span></div></div></div>';
+      '<div class="upd-m">'+x.pct+'% · <span class="ust"><span class="sd" style="background:'+stColor(x.status)+'"></span>'+(x.status||'—')+'</span></div></div></div>';
   }
   if(!all.length){
     hostD.innerHTML='<div class="note" style="padding:4px 2px">Плановых дат выдачи в детальных листах не найдено.</div>';
     hostU.innerHTML='<div class="note" style="padding:4px 2px">Плановых дат выдачи в детальных листах не найдено.</div>';
     return;
   }
-  var delivered=all.filter(function(x){ return x.date>=back && x.date<=today; }).sort(function(a,b){ return b.date-a.date; });
-  var upcoming=all.filter(function(x){ return x.date>today && x.date<=fwd; }).sort(function(a,b){ return a.date-b.date; });
-  hostD.innerHTML=delivered.length?('<div class="upd-h">За последние 7 дней · '+delivered.length+'</div>'+delivered.map(rowHtml).join('')):'<div class="note" style="padding:4px 2px">За последние 7 дней плановых выдач не было.</div>';
-  hostU.innerHTML=upcoming.length?('<div class="upd-h">Ближайшие 7 дней · '+upcoming.length+'</div>'+upcoming.map(rowHtml).join('')):'<div class="note" style="padding:4px 2px">На ближайшие 7 дней выдач не запланировано.</div>';
+  var delivered=all.filter(function(x){ return x.date>=back && x.date<=today; });
+  var upcoming=all.filter(function(x){ return x.date>today && x.date<=fwd; });
+  var dh=splitBlocks(delivered,rowHtml);
+  var uh=splitBlocks(upcoming,rowHtml);
+  hostD.innerHTML=dh||'<div class="note" style="padding:4px 2px">За последние 7 дней плановых выдач не было.</div>';
+  hostU.innerHTML=uh||'<div class="note" style="padding:4px 2px">На ближайшие 7 дней выдач не запланировано.</div>';
 }
 function renderUpdates(){
   var host=document.getElementById('cUpdates'); if(!host) return;
@@ -1059,15 +1073,16 @@ function renderUpdates(){
     items.push({proj:t.proj,part:t.part,label:t.label,corr:t.corr,date:d,pct:t.pct});
   });
   if(!items.length){ host.innerHTML='<div class="note" style="padding:4px 2px">Корректировок с датами в детальных листах пока нет. Лента наполнится, когда по помещениям/разделам появятся корректировки с обновлённой «Датой выдачи».</div>'; return; }
-  var recent=items.filter(function(x){ return x.date>=wk && x.date<=now; }).sort(function(a,b){ return b.date-a.date; });
-  var list=recent.length?recent:items.slice().sort(function(a,b){ return b.date-a.date; }).slice(0,5);
-  var head=recent.length?('За последние 7 дней · '+recent.length+' '+(recent.length===1?'изменение':'изменений')):('За 7 дней изменений нет · последние корректировки');
-  host.innerHTML='<div class="upd-h">'+head+'</div>'+list.map(function(x){
+  var recent=items.filter(function(x){ return x.date>=wk && x.date<=now; });
+  var list=recent.length?recent:items;
+  function rowFn(x){
     var fact=Math.max(0,Math.min(100,Math.round((x.pct||0)-(x.corr||0)/2)));
     return '<div class="upd"><div class="upd-d">'+dChip(x.date)+'</div>'+
       '<div class="upd-b"><div class="upd-t"><b>'+x.proj+'</b> · <span>'+x.label+'</span></div>'+
-      '<div class="upd-m">'+(x.part==='Альбом АИ'?'Альбом АИ':'Визуализация')+' · корректировка <b>'+Math.round(x.corr)+'%</b> · факт '+fact+'%</div></div></div>';
-  }).join('');
+      '<div class="upd-m">корректировка <b>'+Math.round(x.corr)+'%</b> · факт '+fact+'%</div></div></div>';
+  }
+  var note=recent.length?'':'<div class="note" style="padding:0 0 12px">За последние 7 дней изменений нет — показаны все корректировки.</div>';
+  host.innerHTML=note+(splitBlocks(list,rowFn)||'<div class="note" style="padding:4px 2px">Нет данных.</div>');
 }
 function renderCurrent(){
   const C=CURRENT; const P=v=>Math.round(v*100);
