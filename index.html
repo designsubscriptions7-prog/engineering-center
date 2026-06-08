@@ -210,6 +210,7 @@ section{margin-top:64px}
 .pdt th{text-align:left;font-weight:500;color:var(--ink3);font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px 5px 0;border-bottom:1px solid var(--line2)}
 .pdt td{padding:5px 10px 5px 0;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top}
 .pdt td.nm{color:var(--ink);font-weight:500}
+.pdt td b{color:var(--ink)}
 .pdt td.num{font-family:'IBM Plex Mono',monospace;white-space:nowrap}
 .pdt .sd{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle}
 .pdt-empty{font-size:10.5px;color:var(--ink3);padding:6px 0}
@@ -944,10 +945,14 @@ function stColor(s){s=norm(s); if(s.indexOf('заверш')>=0)return 'var(--don
 function projDetail(name){ var n=norm(name); var r=(DETAIL||[]).filter(function(t){var p=norm(t.proj); return p===n||p.indexOf(n)>=0||n.indexOf(p)>=0;}); if(r.length)return r; var w=n.split(/\s+/)[0]; return (DETAIL||[]).filter(function(t){return norm(t.proj).split(/\s+/)[0]===w;}); }
 function detTable(title,rows,unitTh){
   if(!rows.length) return '<div class="pdt-h">'+title+'</div><div class="pdt-empty">нет данных</div>';
-  var body=rows.map(function(r){ var pct=r.pct||(r.area?Math.round(r.done/r.area*100):0); pct=Math.round(pct);
-    return '<tr><td class="nm">'+r.label+'</td><td class="num">'+(r.due||'—')+'</td><td class="num">'+fmtNum2(r.done)+' / '+fmtNum2(r.area)+' м²</td><td class="num">'+pct+'%</td><td><span class="sd" style="background:'+stColor(r.status)+'"></span>'+(r.status||'—')+'</td></tr>';
+  var body=rows.map(function(r){
+    var pct=r.pct||(r.area?(r.done/r.area*100):0);
+    var corr=r.corr||0;
+    var fact=Math.max(0,Math.min(100,Math.round(pct-corr/2)));
+    var corrCell=corr>0?('<span class="corrtag">'+Math.round(corr)+'%</span>'):'—';
+    return '<tr><td class="nm">'+r.label+'</td><td class="num">'+(r.due||'—')+'</td><td class="num">'+fmtNum2(r.done)+' / '+fmtNum2(r.area)+' м²</td><td class="num">'+corrCell+'</td><td class="num"><b>'+fact+'%</b></td><td><span class="sd" style="background:'+stColor(r.status)+'"></span>'+(r.status||'—')+'</td></tr>';
   }).join('');
-  return '<div class="pdt-h">'+title+' · '+rows.length+'</div><table class="pdt"><thead><tr><th>'+unitTh+'</th><th>Выдача</th><th>Площадь</th><th>%</th><th>Статус</th></tr></thead><tbody>'+body+'</tbody></table>';
+  return '<div class="pdt-h">'+title+' · '+rows.length+'</div><table class="pdt"><thead><tr><th>'+unitTh+'</th><th>Выдача</th><th>Площадь</th><th>Корр</th><th>Факт</th><th>Статус</th></tr></thead><tbody>'+body+'</tbody></table>';
 }
 function projDetailHTML(name){
   if(!(DETAIL||[]).length) return '<div class="pdt-empty">Детальные данные не загружены (страницы проектов не опубликованы).</div>';
@@ -1127,7 +1132,7 @@ function parseDetail(text){
   const out=[];
   function block(hdr,part,labelN,areaN,doneN,ownN,pctN,dueN,end){
     if(hdr<0)return; const m=colMap(rows[hdr]);
-    const li=pi(m,labelN), oi=pi(m,ownN), ai=pi(m,areaN), di=pi(m,doneN), pcti=pi(m,pctN), sti=pi(m,['Статус','Сатус']), dui=pi(m,dueN);
+    const li=pi(m,labelN), oi=pi(m,ownN), ai=pi(m,areaN), di=pi(m,doneN), pcti=pi(m,pctN), sti=pi(m,['Статус','Сатус']), dui=pi(m,dueN), cri=pi(m,['% Корректировки','% корректировки','Корректировка %']);
     if(oi<0||li<0)return;
     for(let i=hdr+1;i<end;i++){
       const r=rows[i]; if(!r)continue;
@@ -1135,7 +1140,7 @@ function parseDetail(text){
       const nl=norm(label);
       if(nl.startsWith('общий прогресс')||nl.includes('альбом аи')||nl.includes('визуализац')||nl.includes('вид работы')||nl.includes('помещение'))continue;
       const owner=String(r[oi]||'').trim(); if(!owner)continue;
-      out.push({proj,part,label,owner,area:num(ai>=0?r[ai]:0),done:num(di>=0?r[di]:0),pct:num(pcti>=0?r[pcti]:0),status:String(sti>=0?r[sti]:'').trim(),due:String(dui>=0?r[dui]:'').trim()});
+      out.push({proj,part,label,owner,area:num(ai>=0?r[ai]:0),done:num(di>=0?r[di]:0),pct:num(pcti>=0?r[pcti]:0),corr:num(cri>=0?r[cri]:0),status:String(sti>=0?r[sti]:'').trim(),due:String(dui>=0?r[dui]:'').trim()});
     }
   }
   block(vizHdr,'Визуализация',['Помещение'],['Площадь Виз'],['Выполнено Виз'],['Ответсвенный виз.','Ответственный виз.'],['% Визуализации'],['Выдача визуализации','Выдача'], aiHdr>vizHdr?aiHdr-1:rows.length);
