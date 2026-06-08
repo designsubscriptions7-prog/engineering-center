@@ -701,13 +701,13 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
     <section style="margin-top:34px">
       <div class="shead">
         <div><span class="idx mono">T / TEAM · ТЕКУЩАЯ НАГРУЗКА</span><h2 style="margin-top:6px">Нагрузка команды</h2></div>
-        <div class="note">Кто отвечает за проекты в работе. Верхний уровень — кураторы (ответственные за «Визуализацию» и «Альбом АИ» из Сводного листа). Ниже — фактическое исполнение по разделам.</div>
+        <div class="note">Кто отвечает за проекты в работе. Верхний уровень — ведущие специалисты (ответственные за «Визуализацию» и «Альбом АИ» из Сводного листа). Ниже — фактическое исполнение по разделам.</div>
       </div>
       <div class="kpis" id="teamKpis"></div>
     </section>
     <section>
       <div class="shead">
-        <div><span class="idx mono">T1 / CURATORS · ПО НАПРАВЛЕНИЯМ</span><h2 style="margin-top:6px">Нагрузка кураторов</h2></div>
+        <div><span class="idx mono">T1 / CURATORS · ПО НАПРАВЛЕНИЯМ</span><h2 style="margin-top:6px">Нагрузка ведущих специалистов</h2></div>
         <div class="note">Ответственные за проекты, разделённые на Визуализацию и Альбом АИ. Полосы: площадь (в приоритете) и число проектов.</div>
       </div>
       <div class="card"><div id="teamBars"></div></div>
@@ -723,7 +723,7 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
     <section>
       <div class="shead">
         <div><span class="idx mono">T4 / FINDINGS</span><h2 style="margin-top:6px">Автоматические выводы</h2></div>
-        <div class="note">Формируются по данным кураторов и фактического исполнения. Обновляются автоматически.</div>
+        <div class="note">Формируются по данным ведущих специалистов и фактического исполнения. Обновляются автоматически.</div>
       </div>
       <div class="ins" id="teamInsights"></div>
     </section>
@@ -1243,7 +1243,7 @@ function setSub(view){
          '<span>превью проектов · ссылки на Canva</span>';
   } else if(view==='team'){
     html='<span>нагрузка команды</span>'+
-         '<span>кураторы и исполнители</span>'+
+         '<span>ведущие специалисты и исполнители</span>'+
          '<span>визуализация · альбом АИ</span>';
   }
   el.outerHTML='<span id="headSubMain" style="display:contents">'+html+'</span>';
@@ -1562,7 +1562,7 @@ function renderTeam(){
     }).join('');
     return '<div class="tblk"><div class="tblk-h">'+title+'</div>'+rows+'</div>';
   }
-  document.getElementById('teamBars').innerHTML=curBlock('Кураторы визуализации',aggCur(false))+curBlock('Кураторы · Альбом АИ',aggCur(true));
+  document.getElementById('teamBars').innerHTML=curBlock('Ведущие специалисты визуализации',aggCur(false))+curBlock('Ведущие специалисты · Альбом АИ',aggCur(true));
   renderTeamDetail();
   var ti=document.getElementById('teamInsights'); if(ti) ti.innerHTML=buildTeamInsights();
 }
