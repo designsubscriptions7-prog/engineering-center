@@ -282,12 +282,15 @@ section{margin-top:64px}
 .vacrow{display:flex;align-items:center;gap:12px;height:36px;border-bottom:1px solid var(--line)}
 .vacrow:last-child{border-bottom:none}
 .vacrow.vachead{height:26px;border-bottom:1px solid var(--line2)}
-.vacname{width:185px;flex-shrink:0;font-size:12.5px;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vacname{width:200px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.vacname .vn{font-size:12.5px;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vacname .vd{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink3);flex-shrink:0}
 .vactrack{position:relative;flex:1;height:100%;min-width:0}
 .vacm{position:absolute;top:7px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:var(--ink3);text-transform:uppercase;text-align:center;pointer-events:none}
 .vacgl{position:absolute;top:0;bottom:0;width:1px;background:var(--line);pointer-events:none}
 .vactoday{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);opacity:.7;pointer-events:none;z-index:2}
-.vacbar{position:absolute;top:8px;height:20px;border-radius:5px;background:var(--done);display:flex;align-items:center;padding:0 8px;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:9.5px;white-space:nowrap;overflow:hidden;z-index:1;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.vacbar{position:absolute;top:8px;height:20px;min-width:12px;border-radius:5px;background:var(--done);z-index:1;box-shadow:0 1px 4px rgba(0,0,0,.12);cursor:default;transition:transform .15s,box-shadow .15s}
+.vacbar:hover{transform:scaleY(1.12);box-shadow:0 3px 10px rgba(0,0,0,.2)}
 .vacbar.now{background:var(--accent);box-shadow:0 2px 8px rgba(232,120,40,.4)}
 .vacbar.past{opacity:.45}
 .vacnone{position:absolute;left:0;top:9px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink3);font-style:italic}
@@ -387,23 +390,23 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .tkpi.warn .v{color:#E5484D}
 .tkpi.ok .v{color:var(--done)}
 .tkpi.acc .v{color:var(--accent)}
-.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.qcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;transition:box-shadow .25s,transform .25s,border-color .25s}
-.qcard:hover{box-shadow:0 10px 28px rgba(0,0,0,.08);transform:translateY(-2px);border-color:var(--line2)}
-.qhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.qn{font-family:'Space Grotesk','Archivo',sans-serif;font-size:16px;font-weight:600;color:var(--ink);line-height:1.25}
-.qmeta{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-top:8px}
-.qrows{margin-top:14px;display:flex;flex-direction:column;gap:7px}
-.qrow{display:flex;justify-content:space-between;gap:10px;font-size:12px}
-.qrow .ql{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3)}
-.qrow .qv{color:var(--ink);font-weight:500;text-align:right}
-.qnote{margin-top:13px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;line-height:1.5;color:var(--ink2);font-style:italic}
-.qnum{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink3);font-weight:400}
-.qreadywrap{margin-top:14px}
-.qready{display:flex;align-items:center;gap:10px}
-.qready .qrt{flex:1;height:7px;background:var(--line2);border-radius:3px;overflow:hidden}
-.qready .qrt i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .9s cubic-bezier(.2,.7,.2,1)}
-.qready .qrp{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink);font-weight:600;min-width:34px;text-align:right}
+.qlist{display:flex;flex-direction:column}
+.qitem{padding:14px 0;border-bottom:1px solid var(--line)}
+.qitem:last-child{border-bottom:none}
+.qi-row{display:flex;align-items:center;gap:18px}
+.qi-main{flex:0 0 300px;width:300px;min-width:0}
+.qi-t{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.35}
+.qnum{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink3);font-weight:400;margin-right:6px}
+.qi-m{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-top:5px}
+.qi-status{flex:0 0 150px;width:150px}
+.qi-ready{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:10px}
+.qi-ready .qrt{flex:1;height:7px;background:var(--line2);border-radius:3px;overflow:hidden;min-width:40px}
+.qi-ready .qrt i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+.qi-ready .qrp{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink);font-weight:600;min-width:36px;text-align:right}
+.qi-readytext{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink2)}
+.qi-acc{flex:0 0 120px;width:120px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qi-note{margin-top:7px;font-size:12px;color:var(--ink3);font-style:italic;line-height:1.45}
+@media(max-width:760px){.qi-row{flex-wrap:wrap;gap:10px}.qi-main{flex:1 1 100%;width:auto}.qi-status{flex:0 0 auto;width:auto}.qi-ready{flex:1 1 100%}.qi-acc{flex:0 0 auto;width:auto;text-align:left}}
 .task{display:flex;justify-content:space-between;gap:18px;padding:13px 0;border-bottom:1px solid var(--line);align-items:flex-start}
 .task:last-child{border-bottom:none}
 .task-main{flex:0 0 300px;width:300px;min-width:0}
@@ -802,7 +805,7 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
       <div class="note">Проекты, которые будут взяты в работу следующими — из листа «В очереди». Сортировка: приоритет, затем планируемый старт.</div>
     </div>
     <div class="tkpis" id="queueKpis"></div>
-    <div class="qgrid" id="queueGrid"></div>
+    <div class="qlist" id="queueGrid"></div>
   </section>
 </div>
 
@@ -834,6 +837,7 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
         <div><span class="idx mono">T1 / CURATORS · ПО НАПРАВЛЕНИЯМ</span><h2 style="margin-top:6px">Нагрузка ведущих специалистов</h2></div>
         <div class="note">Ответственные за проекты, разделённые на Визуализацию и Альбом АИ. Полосы: площадь (в приоритете) и число проектов.</div>
       </div>
+      <div class="tkpis" id="teamBarsKpis"></div>
       <div class="card"><div id="teamBars"></div></div>
     </section>
     <section>
@@ -841,6 +845,7 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
         <div><span class="idx mono">T3 / EXECUTION · ПО РАЗДЕЛАМ</span><h2 style="margin-top:6px">Нагрузка исполнителей</h2></div>
         <div class="note">По детальным страницам проектов: разделы и площадь по каждому исполнителю — отдельно Визуализация и Альбом АИ.</div>
       </div>
+      <div class="tkpis" id="teamDetailKpis"></div>
       <div class="card"><div id="teamDetailBars"></div></div>
       <div class="tgrid" id="teamDetailGrid" style="margin-top:1px"></div>
     </section>
@@ -849,6 +854,7 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
         <div><span class="idx mono">T4 / TASKS · ОТВЕТСТВЕННЫЕ</span><h2 style="margin-top:6px">Нагрузка по внеплановым задачам</h2></div>
         <div class="note">Из листа «Внеплановые задачи»: число задач по каждому ответственному — всего, активные и просроченные.</div>
       </div>
+      <div class="tkpis" id="teamTasksKpis"></div>
       <div class="card"><div id="teamTasks"></div></div>
     </section>
     <section>
@@ -1846,6 +1852,8 @@ function renderTeam(){
     return '<div class="tblk"><div class="tblk-h">'+title+'</div>'+rows+'</div>';
   }
   document.getElementById('teamBars').innerHTML=curBlock('Ведущие специалисты визуализации',aggCur(false))+curBlock('Ведущие специалисты · Альбом АИ',aggCur(true));
+  if(typeof setTaskKpis==='function'){ var _vz=aggCur(false).length,_ai=aggCur(true).length;
+    setTaskKpis('teamBarsKpis',[{v:arr.length,l:'Ведущих спец.'},{v:_vz,l:'По визуализации'},{v:_ai,l:'По альбому АИ'},{v:Math.round(totalArea/1000)+'k',l:'Σ площадь, м²',cls:'acc'}]); }
   renderTeamDetail();
   renderTeamTasks();
   renderVacations();
@@ -1878,6 +1886,8 @@ function renderTeamTasks(){
       '</div></div>';
   }).join('');
   host.innerHTML='<div class="tblk"><div class="tblk-h">Внеплановые задачи · по ответственным · '+a.length+'</div>'+rows+'<div class="tlegend"><span><i style="background:var(--orange)"></i>активные</span><span><i style="background:var(--done)"></i>выполненные</span></div></div>';
+  if(typeof setTaskKpis==='function'){ var _ta=a.reduce(function(s,p){return s+p.total;},0), _act=a.reduce(function(s,p){return s+p.active;},0), _ov=a.reduce(function(s,p){return s+p.over;},0);
+    setTaskKpis('teamTasksKpis',[{v:a.length,l:'Ответственных'},{v:_ta,l:'Всего задач'},{v:_act,l:'Активных',cls:'acc'},{v:_ov,l:'Просрочено',cls:(_ov>0?'warn':'')}]); }
 }
 function renderVacations(){
   var host=document.getElementById('teamVac'); if(!host) return;
@@ -1905,11 +1915,11 @@ function renderVacations(){
       var l=pos(r.s), w=(Math.round((r.e-r.s)/86400000)+1)/total*100;
       var onNow=(today>=r.s&&today<=r.e);
       var past=(r.e<today);
-      inner+='<div class="vacbar'+(onNow?' now':'')+(past?' past':'')+'" style="left:'+l+'%;width:'+w+'%" title="'+dd(r.s)+'–'+dd(r.e)+' · '+r.days+' дн.">'+dd(r.s)+'–'+dd(r.e)+'</div>';
+      inner+='<div class="vacbar'+(onNow?' now':'')+(past?' past':'')+'" style="left:'+l+'%;width:'+w+'%" title="'+dd(r.s)+'–'+dd(r.e)+' · '+r.days+' дн."></div>';
     } else {
       inner+='<span class="vacnone">не запланирован</span>';
     }
-    return '<div class="vacrow"><div class="vacname">'+r.name+'</div><div class="vactrack">'+inner+'</div></div>';
+    return '<div class="vacrow"><div class="vacname"><span class="vn">'+r.name+'</span><span class="vd">'+(r.days?(r.days+' дн.'):'—')+'</span></div><div class="vactrack">'+inner+'</div></div>';
   }).join('');
   host.innerHTML='<div class="vacchart">'+head+body+'</div>'+'<div class="tlegend" style="margin-top:14px"><span><i style="background:var(--accent)"></i>в отпуске сейчас</span><span><i style="background:var(--done)"></i>плановый отпуск</span><span><i style="background:var(--accent);opacity:.7;width:2px"></i>сегодня</span></div>';
   // KPI
@@ -1995,6 +2005,12 @@ function renderTeamDetail(){
     return '<div class="tblk"><div class="tblk-h">'+title+'</div>'+rows+'</div>';
   }
   bars.innerHTML=block('Команда визуализации', agg(false), 'помещ.')+block('Команда · Альбом АИ', agg(true), 'разд');
+  if(typeof setTaskKpis==='function'){
+    var _own={}; DETAIL.forEach(function(t){ if(t.owner) _own[t.owner]=1; });
+    var _vr=DETAIL.filter(function(t){return t.part!=='Альбом АИ';}).length;
+    var _ar=DETAIL.filter(function(t){return t.part==='Альбом АИ';}).length;
+    var _area=DETAIL.reduce(function(s,t){return s+(t.area||0);},0);
+    setTaskKpis('teamDetailKpis',[{v:Object.keys(_own).length,l:'Исполнителей'},{v:_vr,l:'Помещений (виз)'},{v:_ar,l:'Разделов (АИ)'},{v:Math.round(_area/1000)+'k',l:'Σ площадь, м²',cls:'acc'}]); }
   grid.style.display='none';
 }
 function parseQueue(text){
@@ -2038,21 +2054,21 @@ function renderQueue(){
     (withR.length?('<div class="tkpi ok"><div class="v">'+hiR+'</div><div class="l">Готовы ≥80%</div></div>'):'')+
     (withAcc?('<div class="tkpi"><div class="v">'+withAcc+'</div><div class="l">С номером АСС</div></div>'):'');
   var arr=Q.slice().sort(function(a,b){ var ra=readyNum(a), rb=readyNum(b); ra=(ra==null?-1:ra); rb=(rb==null?-1:rb); if(rb!==ra) return rb-ra; return String(a.name).localeCompare(String(b.name),'ru'); });
-  grid.innerHTML=arr.map(function(q,i){
+  grid.innerHTML=arr.map(function(q){
     var r=readyNum(q);
     var col=(typeof taskStatusColor==='function')?taskStatusColor(q.status,/выполн|заверш|готов|сдан/i.test(q.status||''),false):'var(--ink3)';
     var statusChip=q.status?('<span class="stchip"><span class="sd" style="background:'+col+'"></span>'+q.status+'</span>'):'';
     var ready=(r!=null)
-      ? '<div class="qready"><div class="qrt"><i style="width:'+r+'%"></i></div><span class="qrp">'+r+'%</span></div>'
-      : (q.ready?('<div class="qrow"><span class="ql">готовность</span><span class="qv">'+q.ready+'</span></div>'):'');
-    var rowsHtml='';
-    if(q.acc) rowsHtml+='<div class="qrow"><span class="ql">номер АСС</span><span class="qv">'+q.acc+'</span></div>';
-    return '<div class="qcard rise" style="animation-delay:'+(i*.05)+'s">'+
-      '<div class="qhead"><div class="qn">'+(q.num?('<span class="qnum">'+q.num+'</span> '):'')+q.name+'</div>'+statusChip+'</div>'+
-      (([q.type,q.city].filter(Boolean).join(' · '))?('<div class="qmeta">'+[q.type,q.city].filter(Boolean).join(' · ')+'</div>'):'')+
-      (ready?('<div class="qreadywrap">'+ready+'</div>'):'')+
-      (rowsHtml?('<div class="qrows">'+rowsHtml+'</div>'):'')+
-      (q.note?('<div class="qnote">'+q.note+'</div>'):'')+
+      ? '<div class="qrt"><i style="width:'+r+'%"></i></div><span class="qrp">'+r+'%</span>'
+      : (q.ready?('<span class="qi-readytext">'+q.ready+'</span>'):'<span class="qi-readytext" style="color:var(--ink3)">—</span>');
+    var meta=[q.type,q.city].filter(Boolean).join(' · ');
+    return '<div class="qitem"><div class="qi-row">'+
+      '<div class="qi-main"><div class="qi-t">'+(q.num?('<span class="qnum">'+q.num+'</span>'):'')+q.name+'</div>'+(meta?('<div class="qi-m">'+meta+'</div>'):'')+'</div>'+
+      '<div class="qi-status">'+statusChip+'</div>'+
+      '<div class="qi-ready">'+ready+'</div>'+
+      '<div class="qi-acc">'+(q.acc?('АСС '+q.acc):'')+'</div>'+
+      '</div>'+
+      (q.note?('<div class="qi-note">'+q.note+'</div>'):'')+
       '</div>';
   }).join('');
 }
