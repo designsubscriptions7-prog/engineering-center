@@ -360,6 +360,24 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .summary .sh{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
 .summary p{margin:0;font-size:12.5px;line-height:1.65;color:var(--ink2)}
 .summary p b{color:var(--ink);font-weight:600}
+.task{display:flex;justify-content:space-between;gap:18px;padding:13px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.task:last-child{border-bottom:none}
+.task-main{flex:1;min-width:0}
+.task-t{font-size:13.5px;color:var(--ink);font-weight:500;line-height:1.4}
+.task-proj{color:var(--ink3);font-weight:400;font-family:'IBM Plex Mono',monospace;font-size:11px}
+.task-m{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink2);margin-top:5px}
+.task-st .sd{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.task-note{color:var(--ink3)}
+.task-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.ptag{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:20px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.ptag.p3{background:rgba(229,72,77,.12);border-color:rgba(229,72,77,.4);color:#E5484D}
+.ptag.p2{background:rgba(232,120,40,.12);border-color:rgba(232,120,40,.4);color:var(--accent)}
+.ptag.p1{color:var(--ink3)}
+.task-due{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink2);white-space:nowrap}
+.task-due.over{color:#E5484D;font-weight:600}
+.task.done{opacity:.5}
+.task.done .task-t{text-decoration:line-through}
+.task.over .task-t{color:#E5484D}
 .reportbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px}
 .snapbtn{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--navy);border:none;border-radius:30px;padding:13px 24px;cursor:pointer;transition:background .2s,transform .2s}
 .snapbtn:hover{background:var(--accent);transform:translateY(-1px)}
@@ -685,6 +703,15 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
   </section>
   </div><!-- /repPart3 -->
   </div><!-- /reportArea -->
+
+  <section>
+    <div class="shead">
+      <div><span class="idx mono">A5 / TASKS</span><h2 style="margin-top:6px">Внеплановые задачи</h2></div>
+      <div class="note">Задачи вне основного плана — из листа «Внеплановые задачи». Просроченные сверху, затем по приоритету и сроку; выполненные — внизу.</div>
+    </div>
+    <div class="card"><div id="cTasks"></div></div>
+    <div class="summary" id="cTasksSum" hidden></div>
+  </section>
 
   <section>
     <div class="shead">
@@ -1097,6 +1124,65 @@ function splitBlocks(list,rowFn){
 function _cntVA(arr){var v=0,a=0;arr.forEach(function(x){if(x.part==='Альбом АИ')a++;else v++;});return {v:v,a:a,t:arr.length};}
 function _topProj(arr){var m={};arr.forEach(function(x){m[x.proj]=(m[x.proj]||0)+1;});var bp='',bn=0;for(var k in m){if(m[k]>bn){bn=m[k];bp=k;}}return {name:bp,n:bn};}
 function setSummary(id,html){var el=document.getElementById(id);if(!el)return;if(!html){el.hidden=true;el.innerHTML='';return;}el.hidden=false;el.innerHTML='<div class="sh">● Вывод</div><p>'+html+'</p>';}
+function parseTasks(text){
+  var rows=to2D(text); if(!rows.length) return [];
+  var hdr=-1;
+  for(var i=0;i<Math.min(10,rows.length);i++){ var j=(rows[i]||[]).map(norm);
+    if(j.some(function(c){return c.indexOf('задач')===0||c.indexOf('задани')===0||c==='описание'||c==='наименование';})){ hdr=i; break; } }
+  if(hdr<0) hdr=0;
+  var m=colMap(rows[hdr]); var out=[];
+  for(var r=hdr+1;r<rows.length;r++){
+    var row=rows[r]; if(!row) continue;
+    var task=pick(row,m,['Задача','Задание','Описание','Наименование']);
+    if(!task) continue;
+    out.push({
+      task:task,
+      proj:pick(row,m,['Проект','Объект']),
+      owner:pick(row,m,['Ответственный','Ответсвенный','Исполнитель']),
+      prio:pick(row,m,['Приоритет','Важность']),
+      status:pick(row,m,['Статус','Состояние']),
+      setDate:pick(row,m,['Поставлена','Дата постановки','Создана','Дата']),
+      due:pick(row,m,['Срок','Дедлайн','Срок выполнения']),
+      note:pick(row,m,['Комментарий','Примечание','Заметка'])
+    });
+  }
+  return out;
+}
+function taskStatusColor(s,done,over){ if(done) return 'var(--done)'; if(over) return '#E5484D'; s=norm(s); if(/работ|процесс|выполня/.test(s)) return 'var(--smr)'; if(/нов/.test(s)) return 'var(--accent)'; if(/отлож|пауз|приостан|ожид/.test(s)) return 'var(--hold)'; return 'var(--ink3)'; }
+function taskRow(t){
+  var col=taskStatusColor(t.status,t._done,t._overdue);
+  var prioTag=t.prio?('<span class="ptag p'+t._pr+'">'+t.prio+'</span>'):'';
+  var dueTxt=t._due?dChip(t._due):(t.due||'');
+  return '<div class="task'+(t._done?' done':'')+(t._overdue?' over':'')+'">'+
+    '<div class="task-main"><div class="task-t">'+t.task+(t.proj?' <span class="task-proj">· '+t.proj+'</span>':'')+'</div>'+
+    '<div class="task-m">'+(t.owner?('<span>'+t.owner+'</span> · '):'')+'<span class="task-st"><span class="sd" style="background:'+col+'"></span>'+(t.status||'—')+'</span>'+(t.note?(' · <span class="task-note">'+t.note+'</span>'):'')+'</div></div>'+
+    '<div class="task-side">'+prioTag+(dueTxt?('<span class="task-due'+(t._overdue?' over':'')+'">'+(t._overdue?'просрочено · ':'срок ')+dueTxt+'</span>'):'')+'</div>'+
+    '</div>';
+}
+function renderTasks(){
+  var host=document.getElementById('cTasks'); if(!host) return;
+  var T=TASKS||[];
+  if(!T.length){ host.innerHTML='<div class="note" style="padding:4px 2px">Лист «Внеплановые задачи» пуст или ещё не подключён. Добавьте строки в лист — они появятся здесь автоматически.</div>'; setSummary('cTasksSum',''); return; }
+  var today=new Date(); today.setHours(0,0,0,0);
+  function prioRank(p){p=norm(p);if(/высок|high|критич|срочн/.test(p))return 3;if(/средн|medium|обычн/.test(p))return 2;if(/низк|low/.test(p))return 1;return 0;}
+  function isDone(s){return /выполн|заверш|готов|done|закры|сдан/i.test(s||'');}
+  T.forEach(function(t){ t._due=parseRuDate(t.due); t._done=isDone(t.status); t._pr=prioRank(t.prio); t._overdue=(t._due && t._due<today && !t._done); });
+  var active=T.filter(function(t){return !t._done;});
+  var done=T.filter(function(t){return t._done;});
+  active.sort(function(a,b){
+    if(a._overdue!==b._overdue) return a._overdue?-1:1;
+    if(b._pr!==a._pr) return b._pr-a._pr;
+    var ad=a._due?a._due.getTime():9e15, bd=b._due?b._due.getTime():9e15; return ad-bd;
+  });
+  done.sort(function(a,b){var ad=a._due?a._due.getTime():0,bd=b._due?b._due.getTime():0;return bd-ad;});
+  host.innerHTML=active.concat(done).map(taskRow).join('');
+  var total=T.length, nactive=active.length, nover=T.filter(function(t){return t._overdue;}).length, ndone=done.length;
+  var s='Всего внеплановых задач: <b>'+total+'</b>. В работе и ожидании — <b>'+nactive+'</b>, выполнено — <b>'+ndone+'</b>.';
+  s+= nover>0 ? ' Просрочено — <b>'+nover+'</b> '+plural(nover,'задача','задачи','задач')+': в первую очередь.' : ' Просроченных нет.';
+  var hp=active.filter(function(t){return t._pr===3 && !t._overdue;}).length;
+  if(hp>0) s+=' Высокий приоритет (в срок) — '+hp+'.';
+  setSummary('cTasksSum',s);
+}
 function renderDue(){
   var hostD=document.getElementById('cDelivered'), hostU=document.getElementById('cUpcoming');
   if(!hostD||!hostU) return;
@@ -1372,6 +1458,7 @@ function applyTheme(t){
 const CONFIG={
   portfolioCSV:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1421922288&single=true&output=csv",
   currentCSV:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1563839663&single=true&output=csv",
+  tasksCSV:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1475058938&single=true&output=csv",
   detailCSV:[
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1065117056&single=true&output=csv",
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1426132883&single=true&output=csv",
@@ -1385,6 +1472,7 @@ const CONFIG={
   ]
 };
 let DETAIL=[]; // tasks from detail pages
+let TASKS=[]; // внеплановые задачи
 
 const num=v=>{const n=parseFloat(String(v==null?'':v).replace(/\s/g,'').replace('%','').replace(',','.'));return isNaN(n)?0:n;};
 const pct01=v=>{const n=num(v);return n>1?n/100:n;};
@@ -1737,6 +1825,7 @@ async function init(){
     const jobs=[];
     if(CONFIG.portfolioCSV) jobs.push(fetchText(CONFIG.portfolioCSV).then(t=>{const m=parsePortfolio(t);if(m.length)DATA=m;}));
     if(CONFIG.currentCSV)   jobs.push(fetchText(CONFIG.currentCSV).then(t=>{const m=parseCurrent(t);if(m.length)CURRENT=m;}));
+    if(CONFIG.tasksCSV)     jobs.push(fetchText(CONFIG.tasksCSV).then(t=>{const m=parseTasks(t);TASKS=m;},function(){}));
     if(jobs.length){await Promise.all(jobs);live=true;}
     if(Array.isArray(CONFIG.detailCSV)&&CONFIG.detailCSV.length){
       const dres=await Promise.allSettled(CONFIG.detailCSV.map(u=>fetchText(u).then(function(t){return {ok:true,rows:parseDetail(t)};},function(e){return {ok:false,err:String(e)};})));
@@ -1747,7 +1836,7 @@ async function init(){
   }catch(e){live=false;console.warn('Онлайн-данные недоступны, показан снимок:',e);}
   const src=document.getElementById('dataSource');
   if(src) src.textContent=(CONFIG.portfolioCSV||CONFIG.currentCSV)?(live?'источник: онлайн-таблица':'источник: снимок (нет связи)'):'источник: снимок';
-  buildChips(); wireFilters(); render(); renderCurrent(); renderGallery(); setFooter();
+  buildChips(); wireFilters(); render(); renderCurrent(); renderGallery(); renderTasks(); setFooter();
   if(currentView==='team') openTeam();
 }
 init();
