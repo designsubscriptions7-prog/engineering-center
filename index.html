@@ -278,6 +278,20 @@ section{margin-top:64px}
 .tlegend{display:flex;gap:18px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
 .tlegend span{display:inline-flex;align-items:center;gap:6px}
 .tlegend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.vacchart{margin-top:2px}
+.vacrow{display:flex;align-items:center;gap:12px;height:36px;border-bottom:1px solid var(--line)}
+.vacrow:last-child{border-bottom:none}
+.vacrow.vachead{height:26px;border-bottom:1px solid var(--line2)}
+.vacname{width:185px;flex-shrink:0;font-size:12.5px;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vactrack{position:relative;flex:1;height:100%;min-width:0}
+.vacm{position:absolute;top:7px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;color:var(--ink3);text-transform:uppercase;text-align:center;pointer-events:none}
+.vacgl{position:absolute;top:0;bottom:0;width:1px;background:var(--line);pointer-events:none}
+.vactoday{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);opacity:.7;pointer-events:none;z-index:2}
+.vacbar{position:absolute;top:8px;height:20px;border-radius:5px;background:var(--done);display:flex;align-items:center;padding:0 8px;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:9.5px;white-space:nowrap;overflow:hidden;z-index:1;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.vacbar.now{background:var(--accent);box-shadow:0 2px 8px rgba(232,120,40,.4)}
+.vacbar.past{opacity:.45}
+.vacnone{position:absolute;left:0;top:9px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink3);font-style:italic}
+@media(max-width:640px){.vacname{width:120px;font-size:11px}.vacbar{font-size:8px;padding:0 4px}}
 .tb2r .v{width:124px;text-align:right;font-size:11px;color:var(--ink2);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
 .tb2r.sub .v{color:var(--ink3)}
 @media(max-width:560px){.tbar2{flex-direction:column;align-items:stretch;gap:7px}.tbar2 .tbn{width:auto}.tb2r .v{width:100px}}
@@ -843,6 +857,14 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
         <div class="note">Формируются по данным ведущих специалистов и фактического исполнения. Обновляются автоматически.</div>
       </div>
       <div class="ins" id="teamInsights"></div>
+    </section>
+    <section>
+      <div class="shead">
+        <div><span class="idx mono">T6 / VACATIONS · ИЮНЬ–ДЕКАБРЬ 2026</span><h2 style="margin-top:6px">График отпусков</h2></div>
+        <div class="note">Плановые отпуска сотрудников отдела. Зелёная полоса — период отпуска; вертикальная линия — сегодня.</div>
+      </div>
+      <div class="tkpis" id="vacKpis"></div>
+      <div class="card"><div id="teamVac"></div></div>
     </section>
   </div>
 </div>
@@ -1562,6 +1584,20 @@ const CONFIG={
 let DETAIL=[]; // tasks from detail pages
 let TASKS=[]; // внеплановые задачи
 let QUEUE=[]; // проекты в очереди
+const VAC=[
+ {name:'Темирбааев Темирлан', start:'10.08.2026', end:'21.08.2026', days:12},
+ {name:'Петроченко Денис', start:'01.07.2026', end:'15.07.2026', days:15},
+ {name:'Касенов Данияр', start:'', end:'', days:0},
+ {name:'Кудайберген Марал', start:'17.08.2026', end:'28.08.2026', days:12},
+ {name:'Абылхаирова Дамира', start:'24.08.2026', end:'28.08.2026', days:5},
+ {name:'Куанышбаев Алибек', start:'30.07.2026', end:'31.07.2026', days:2},
+ {name:'Карабек Коркем', start:'27.07.2026', end:'07.08.2026', days:12},
+ {name:'Ибрайханов Шерхан', start:'', end:'', days:0},
+ {name:'Айкенова Дильназ', start:'05.10.2026', end:'16.10.2026', days:12},
+ {name:'Тулетбекова Алуа', start:'08.06.2026', end:'19.06.2026', days:12},
+ {name:'Жигеров Нурсултанбек', start:'', end:'', days:0},
+ {name:'Аманжолов Санжар', start:'', end:'', days:0}
+];
 
 const num=v=>{const n=parseFloat(String(v==null?'':v).replace(/\s/g,'').replace('%','').replace(',','.'));return isNaN(n)?0:n;};
 const pct01=v=>{const n=num(v);return n>1?n/100:n;};
@@ -1812,6 +1848,7 @@ function renderTeam(){
   document.getElementById('teamBars').innerHTML=curBlock('Ведущие специалисты визуализации',aggCur(false))+curBlock('Ведущие специалисты · Альбом АИ',aggCur(true));
   renderTeamDetail();
   renderTeamTasks();
+  renderVacations();
   var ti=document.getElementById('teamInsights'); if(ti) ti.innerHTML=buildTeamInsights();
 }
 function fmtArea2(n){return Math.round(n).toLocaleString('ru-RU')+' м²';}
@@ -1842,6 +1879,52 @@ function renderTeamTasks(){
   }).join('');
   host.innerHTML='<div class="tblk"><div class="tblk-h">Внеплановые задачи · по ответственным · '+a.length+'</div>'+rows+'<div class="tlegend"><span><i style="background:var(--orange)"></i>активные</span><span><i style="background:var(--done)"></i>выполненные</span></div></div>';
 }
+function renderVacations(){
+  var host=document.getElementById('teamVac'); if(!host) return;
+  var data=VAC||[];
+  var rs=new Date(2026,5,1), re=new Date(2026,11,31);
+  var total=Math.round((re-rs)/86400000)+1;
+  function pos(d){return (d-rs)/86400000/total*100;}
+  function dd(d){return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2);}
+  var today=new Date(); today.setHours(0,0,0,0);
+  var months=['Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  // grid lines (month starts Jul..Dec) + today, reused per track
+  var grid='';
+  for(var mi=1;mi<7;mi++){ var ms=new Date(2026,5+mi,1); grid+='<i class="vacgl" style="left:'+pos(ms)+'%"></i>'; }
+  var todayLine=''; if(today>=rs&&today<=re){ todayLine='<i class="vactoday" style="left:'+pos(today)+'%"></i>'; }
+  // header month labels
+  var head='<div class="vacrow vachead"><div class="vacname"></div><div class="vactrack">';
+  for(var k=0;k<7;k++){ var mss=new Date(2026,5+k,1), mee=new Date(2026,5+k+1,1); head+='<span class="vacm" style="left:'+pos(mss)+'%;width:'+((mee-mss)/86400000/total*100)+'%">'+months[k]+'</span>'; }
+  head+=grid+todayLine+'</div></div>';
+  // rows
+  var rows=data.map(function(p){var s=p.start?parseRuDate(p.start):null,e=p.end?parseRuDate(p.end):null;return {name:p.name,s:s,e:e,days:p.days};});
+  rows.sort(function(a,b){ if(!a.s&&!b.s)return String(a.name).localeCompare(String(b.name),'ru'); if(!a.s)return 1; if(!b.s)return -1; return a.s-b.s; });
+  var body=rows.map(function(r){
+    var inner=grid+todayLine;
+    if(r.s&&r.e){
+      var l=pos(r.s), w=(Math.round((r.e-r.s)/86400000)+1)/total*100;
+      var onNow=(today>=r.s&&today<=r.e);
+      var past=(r.e<today);
+      inner+='<div class="vacbar'+(onNow?' now':'')+(past?' past':'')+'" style="left:'+l+'%;width:'+w+'%" title="'+dd(r.s)+'–'+dd(r.e)+' · '+r.days+' дн.">'+dd(r.s)+'–'+dd(r.e)+'</div>';
+    } else {
+      inner+='<span class="vacnone">не запланирован</span>';
+    }
+    return '<div class="vacrow"><div class="vacname">'+r.name+'</div><div class="vactrack">'+inner+'</div></div>';
+  }).join('');
+  host.innerHTML='<div class="vacchart">'+head+body+'</div>'+'<div class="tlegend" style="margin-top:14px"><span><i style="background:var(--accent)"></i>в отпуске сейчас</span><span><i style="background:var(--done)"></i>плановый отпуск</span><span><i style="background:var(--accent);opacity:.7;width:2px"></i>сегодня</span></div>';
+  // KPI
+  var planned=rows.filter(function(r){return r.s&&r.e;});
+  var onNow=planned.filter(function(r){return today>=r.s&&today<=r.e;});
+  var upcoming=planned.filter(function(r){return r.s>today;}).sort(function(a,b){return a.s-b.s;});
+  var nextOne=upcoming[0];
+  var kp=document.getElementById('vacKpis');
+  if(kp) kp.innerHTML=
+    '<div class="tkpi"><div class="v">'+planned.length+'</div><div class="l">Запланировали отпуск</div></div>'+
+    '<div class="tkpi'+(onNow.length?' ok':'')+'"><div class="v">'+onNow.length+'</div><div class="l">В отпуске сейчас</div></div>'+
+    '<div class="tkpi acc"><div class="v">'+(nextOne?dd(nextOne.s):'—')+'</div><div class="l">Ближайший отпуск</div></div>'+
+    '<div class="tkpi"><div class="v">'+(rows.length-planned.length)+'</div><div class="l">Без отпуска</div></div>';
+}
+
 function buildTeamInsights(){
   var out=[];
   var C=CURRENT||[];
