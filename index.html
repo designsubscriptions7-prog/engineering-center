@@ -369,18 +369,19 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .tkpi.acc .v{color:var(--accent)}
 .task{display:flex;justify-content:space-between;gap:18px;padding:13px 0;border-bottom:1px solid var(--line);align-items:flex-start}
 .task:last-child{border-bottom:none}
-.task-main{flex:0 0 auto;max-width:44%;min-width:0}
+.task-main{flex:0 0 300px;width:300px;min-width:0}
 .task-mid{flex:1 1 auto;min-width:0;font-size:12px;line-height:1.5;color:var(--ink2);padding-top:1px}
 .task-cm{}
-.task-t{font-size:13.5px;color:var(--ink);font-weight:500;line-height:1.4}
+.task-t{font-size:13.5px;color:var(--ink);font-weight:600;line-height:1.4}
 .task-proj{color:var(--ink3);font-weight:400;font-family:'IBM Plex Mono',monospace;font-size:11px}
-.task-m{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink2);margin-top:5px}
+.task-m{display:flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink2);margin-top:6px}
 .task-st .sd{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle}
-.stchip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;border:1px solid var(--line2);font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2);vertical-align:middle}
+.stchip{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;border:1px solid var(--line2);font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2);vertical-align:middle}
 .stchip .sd{width:6px;height:6px;border-radius:50%;display:inline-block}
 .task-note{color:var(--ink3)}
-.task-kind{color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
-@media(max-width:760px){.task{flex-wrap:wrap}.task-main{max-width:100%;flex:1 1 100%}.task-mid{flex:1 1 100%;order:3;margin-top:4px}.task-side{order:2}}
+.task-kind{flex:0 0 140px;width:140px;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-own{color:var(--ink3)}
+@media(max-width:760px){.task{flex-wrap:wrap}.task-main{width:auto;max-width:100%;flex:1 1 100%}.task-kind{flex:0 0 auto;width:auto}.task-mid{flex:1 1 100%;order:3;margin-top:4px}.task-side{order:2}}
 .task-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
 .ptag{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:20px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
 .ptag.p3{background:rgba(229,72,77,.12);border-color:rgba(229,72,77,.4);color:#E5484D}
@@ -1175,13 +1176,12 @@ function taskRow(t){
   var col=taskStatusColor(t.status,t._done,t._overdue);
   var prioTag=t.prio?('<span class="ptag p'+t._pr+'">'+t.prio+'</span>'):'';
   var dueTxt=t._due?dChip(t._due):(t.due||'');
-  var meta=[];
-  if(t.kind) meta.push('<span class="task-kind">'+t.kind+'</span>');
-  if(t.owner) meta.push('<span>'+t.owner+'</span>');
-  meta.push('<span class="stchip"><span class="sd" style="background:'+col+'"></span>'+(t.status||'—')+'</span>');
+  var metaHtml='<span class="task-kind">'+(t.kind||'')+'</span>'+
+    '<span class="stchip"><span class="sd" style="background:'+col+'"></span>'+(t.status||'—')+'</span>'+
+    (t.owner?('<span class="task-own">'+t.owner+'</span>'):'');
   return '<div class="task'+(t._done?' done':'')+(t._overdue?' over':'')+'">'+
     '<div class="task-main"><div class="task-t">'+t.task+(t.proj?' <span class="task-proj">· '+t.proj+'</span>':'')+'</div>'+
-    '<div class="task-m">'+meta.join(' · ')+'</div></div>'+
+    '<div class="task-m">'+metaHtml+'</div></div>'+
     '<div class="task-mid">'+(t.note?('<span class="task-cm">'+t.note+'</span>'):'')+'</div>'+
     '<div class="task-side">'+prioTag+(dueTxt?('<span class="task-due'+(t._overdue?' over':'')+'">'+(t._overdue?'просрочено · ':'срок ')+dueTxt+'</span>'):'')+'</div>'+
     '</div>';
