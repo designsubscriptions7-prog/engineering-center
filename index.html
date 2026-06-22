@@ -700,6 +700,7 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
       <div><span class="idx mono">A3 / DELIVERED · 7 ДНЕЙ</span><h2 style="margin-top:6px">Выдано за неделю</h2></div>
       <div class="note">Помещения и разделы с плановой выдачей за последние 7 дней — что должно было быть выдано, со статусом. Разбито на Визуализацию и Альбом АИ.</div>
     </div>
+    <div class="tkpis" id="cDeliveredKpis"></div>
     <div class="card"><div id="cDelivered"></div></div>
     <div class="summary" id="cDeliveredSum" hidden></div>
   </section>
@@ -709,6 +710,7 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
       <div><span class="idx mono">A4 / CORRECTIONS · 7 ДНЕЙ</span><h2 style="margin-top:6px">Корректировки за неделю</h2></div>
       <div class="note">Корректировки с изменением даты выдачи за последние 7 дней — по столбцу «Дата выдачи» детальных листов. Разбито на Визуализацию и Альбом АИ.</div>
     </div>
+    <div class="tkpis" id="cUpdatesKpis"></div>
     <div class="card"><div id="cUpdates"></div></div>
     <div class="summary" id="cUpdatesSum" hidden></div>
   </section>
@@ -720,6 +722,7 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
       <div><span class="idx mono">A5 / UPCOMING · 7 ДНЕЙ</span><h2 style="margin-top:6px">К выдаче — неделя вперёд</h2></div>
       <div class="note">Что запланировано к выдаче в ближайшие 7 дней по плановым датам выдачи. Разбито на Визуализацию и Альбом АИ.</div>
     </div>
+    <div class="tkpis" id="cUpcomingKpis"></div>
     <div class="card"><div id="cUpcoming"></div></div>
     <div class="summary" id="cUpcomingSum" hidden></div>
   </section>
@@ -1138,6 +1141,7 @@ function splitBlocks(list,rowFn){
 }
 function _cntVA(arr){var v=0,a=0;arr.forEach(function(x){if(x.part==='Альбом АИ')a++;else v++;});return {v:v,a:a,t:arr.length};}
 function _topProj(arr){var m={};arr.forEach(function(x){m[x.proj]=(m[x.proj]||0)+1;});var bp='',bn=0;for(var k in m){if(m[k]>bn){bn=m[k];bp=k;}}return {name:bp,n:bn};}
+function setTaskKpis(id,items){ var el=document.getElementById(id); if(el) el.innerHTML=items.map(function(k){return '<div class="tkpi'+(k.cls?(' '+k.cls):'')+'"><div class="v">'+k.v+'</div><div class="l">'+k.l+'</div></div>';}).join(''); }
 function setSummary(id,html){var el=document.getElementById(id);if(!el)return;if(!html){el.hidden=true;el.innerHTML='';return;}el.hidden=false;el.innerHTML='<div class="sh">● Вывод</div><p>'+html+'</p>';}
 function parseTasks(text){
   var rows=to2D(text); if(!rows.length) return [];
@@ -1236,6 +1240,7 @@ function renderDue(){
     hostD.innerHTML='<div class="note" style="padding:4px 2px">Плановых дат выдачи в детальных листах не найдено.</div>';
     hostU.innerHTML='<div class="note" style="padding:4px 2px">Плановых дат выдачи в детальных листах не найдено.</div>';
     setSummary('cDeliveredSum','');setSummary('cUpcomingSum','');
+    ['cDeliveredKpis','cUpcomingKpis'].forEach(function(idz){var e=document.getElementById(idz); if(e)e.innerHTML='';});
     return;
   }
   var delivered=all.filter(function(x){ return x.date>=back && x.date<=today; });
@@ -1246,9 +1251,10 @@ function renderDue(){
   hostU.innerHTML=uh||'<div class="note" style="padding:4px 2px">На ближайшие 7 дней выдач не запланировано.</div>';
   (function(){
     var c=_cntVA(delivered);
-    if(!c.t){ setSummary('cDeliveredSum',''); return; }
+    if(!c.t){ setSummary('cDeliveredSum',''); var e=document.getElementById('cDeliveredKpis'); if(e)e.innerHTML=''; return; }
     var done=delivered.filter(function(x){return /заверш/i.test(x.status||'');}).length;
     var inwork=c.t-done;
+    setTaskKpis('cDeliveredKpis',[{v:c.t,l:'Всего к выдаче'},{v:done,l:'Завершено',cls:'ok'},{v:inwork,l:'В работе',cls:(inwork>0?'acc':'')},{v:c.v,l:'Визуализация'},{v:c.a,l:'Альбом АИ'}]);
     var s='За последние 7 дней к выдаче подходило <b>'+c.t+'</b> '+plural(c.t,'элемент','элемента','элементов')+
       ' — '+c.v+' '+plural(c.v,'помещение','помещения','помещений')+' визуализации и '+c.a+' '+plural(c.a,'раздел','раздела','разделов')+' АИ. '+
       'Завершено <b>'+done+'</b>, ещё в работе <b>'+inwork+'</b>.';
@@ -1257,9 +1263,10 @@ function renderDue(){
   })();
   (function(){
     var c=_cntVA(upcoming);
-    if(!c.t){ setSummary('cUpcomingSum',''); return; }
+    if(!c.t){ setSummary('cUpcomingSum',''); var e=document.getElementById('cUpcomingKpis'); if(e)e.innerHTML=''; return; }
     var ready=upcoming.filter(function(x){return x.pct>=90;}).length;
     var att=upcoming.filter(function(x){return x.pct<60;}).length;
+    setTaskKpis('cUpcomingKpis',[{v:c.t,l:'Всего к выдаче'},{v:ready,l:'Готовы ≥90%',cls:'ok'},{v:att,l:'Внимание <60%',cls:(att>0?'warn':'')},{v:c.v,l:'Визуализация'},{v:c.a,l:'Альбом АИ'}]);
     var low=upcoming.slice().sort(function(a,b){return a.pct-b.pct;})[0];
     var s='На ближайшие 7 дней запланировано <b>'+c.t+'</b> '+plural(c.t,'выдача','выдачи','выдач')+
       ' — '+c.v+' '+plural(c.v,'помещение','помещения','помещений')+' визуализации и '+c.a+' '+plural(c.a,'раздел','раздела','разделов')+' АИ. '+
@@ -1279,7 +1286,7 @@ function renderUpdates(){
     var d=parseRuDate(t.corrDate); if(!d) return;
     items.push({proj:t.proj,part:t.part,label:t.label,corr:t.corr,date:d,pct:t.pct});
   });
-  if(!items.length){ host.innerHTML='<div class="note" style="padding:4px 2px">Корректировок с датами в детальных листах пока нет. Лента наполнится, когда по помещениям/разделам появятся корректировки с обновлённой «Датой выдачи».</div>'; setSummary('cUpdatesSum',''); return; }
+  if(!items.length){ host.innerHTML='<div class="note" style="padding:4px 2px">Корректировок с датами в детальных листах пока нет. Лента наполнится, когда по помещениям/разделам появятся корректировки с обновлённой «Датой выдачи».</div>'; var _ke=document.getElementById('cUpdatesKpis'); if(_ke)_ke.innerHTML=''; setSummary('cUpdatesSum',''); return; }
   var recent=items.filter(function(x){ return x.date>=wk && x.date<=now; });
   var list=recent.length?recent:items;
   function rowFn(x){
@@ -1293,9 +1300,10 @@ function renderUpdates(){
   (function(){
     var base=recent.length?recent:items;
     var c=_cntVA(base);
-    if(!c.t){ setSummary('cUpdatesSum',''); return; }
+    if(!c.t){ setSummary('cUpdatesSum',''); var e=document.getElementById('cUpdatesKpis'); if(e)e.innerHTML=''; return; }
     var sum=0; base.forEach(function(x){sum+=(x.corr||0);}); var avg=Math.round(sum/c.t);
     var tp=_topProj(base);
+    setTaskKpis('cUpdatesKpis',[{v:c.t,l:'Корректировок'},{v:c.v,l:'Визуализация',cls:'acc'},{v:c.a,l:'Альбом АИ',cls:'acc'},{v:avg+'%',l:'Средний объём',cls:'warn'}]);
     var scope=recent.length?'за последние 7 дней':'за всё время (за 7 дней новых не было)';
     var s='Корректировки '+scope+': <b>'+c.t+'</b> '+plural(c.t,'корректировка','корректировки','корректировок')+
       ' — '+c.v+' по визуализации, '+c.a+' по альбому АИ. Средний объём — <b>'+avg+'%</b>.';
