@@ -367,6 +367,23 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .tkpi.warn .v{color:#E5484D}
 .tkpi.ok .v{color:var(--done)}
 .tkpi.acc .v{color:var(--accent)}
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.qcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;transition:box-shadow .25s,transform .25s,border-color .25s}
+.qcard:hover{box-shadow:0 10px 28px rgba(0,0,0,.08);transform:translateY(-2px);border-color:var(--line2)}
+.qhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.qn{font-family:'Space Grotesk','Archivo',sans-serif;font-size:16px;font-weight:600;color:var(--ink);line-height:1.25}
+.qmeta{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-top:8px}
+.qrows{margin-top:14px;display:flex;flex-direction:column;gap:7px}
+.qrow{display:flex;justify-content:space-between;gap:10px;font-size:12px}
+.qrow .ql{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3)}
+.qrow .qv{color:var(--ink);font-weight:500;text-align:right}
+.qnote{margin-top:13px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;line-height:1.5;color:var(--ink2);font-style:italic}
+.qnum{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink3);font-weight:400}
+.qreadywrap{margin-top:14px}
+.qready{display:flex;align-items:center;gap:10px}
+.qready .qrt{flex:1;height:7px;background:var(--line2);border-radius:3px;overflow:hidden}
+.qready .qrt i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+.qready .qrp{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink);font-weight:600;min-width:34px;text-align:right}
 .task{display:flex;justify-content:space-between;gap:18px;padding:13px 0;border-bottom:1px solid var(--line);align-items:flex-start}
 .task:last-child{border-bottom:none}
 .task-main{flex:0 0 300px;width:300px;min-width:0}
@@ -545,6 +562,7 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
 <div class="tabs" id="tabs">
   <button type="button" class="tab on" data-view="current">ТЕКУЩИЕ ПРОЕКТЫ · В РАБОТЕ <span class="c" id="curCount">5</span></button>
   <button type="button" class="tab" data-view="gallery">ВИЗУАЛИЗАЦИИ · CANVA <span class="c" id="galCount">0</span></button>
+  <button type="button" class="tab" data-view="queue">В ОЧЕРЕДИ <span class="c" id="queueCount">0</span></button>
   <button type="button" class="tab" data-view="portfolio">ПОРТФЕЛЬ · ЗАВЕРШЁННЫЕ <span class="c" id="portCount">25</span></button>
   <button type="button" class="tab" data-view="team">КОМАНДА · НАГРУЗКА <span class="c" style="opacity:.7">🔒</span></button>
   <button type="button" id="snapBtn" class="icbtn" aria-label="Сохранить отчёт картинками" data-tip="Соберёт KPI, проекты и сводки недели в один PNG — для письма в Outlook">
@@ -757,6 +775,17 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
   </section>
 </div>
 
+<div id="view-queue" hidden>
+  <section style="margin-top:34px">
+    <div class="shead">
+      <div><span class="idx mono">Q / QUEUE · СЛЕДУЮЩИЕ</span><h2 style="margin-top:6px">Проекты в очереди</h2></div>
+      <div class="note">Проекты, которые будут взяты в работу следующими — из листа «В очереди». Сортировка: приоритет, затем планируемый старт.</div>
+    </div>
+    <div class="tkpis" id="queueKpis"></div>
+    <div class="qgrid" id="queueGrid"></div>
+  </section>
+</div>
+
 <div id="view-team" hidden>
   <div id="teamLock">
     <section style="margin-top:34px">
@@ -797,7 +826,14 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
     </section>
     <section>
       <div class="shead">
-        <div><span class="idx mono">T4 / FINDINGS</span><h2 style="margin-top:6px">Автоматические выводы</h2></div>
+        <div><span class="idx mono">T4 / TASKS · ОТВЕТСТВЕННЫЕ</span><h2 style="margin-top:6px">Нагрузка по внеплановым задачам</h2></div>
+        <div class="note">Из листа «Внеплановые задачи»: число задач по каждому ответственному — всего, активные и просроченные.</div>
+      </div>
+      <div class="card"><div id="teamTasks"></div></div>
+    </section>
+    <section>
+      <div class="shead">
+        <div><span class="idx mono">T5 / FINDINGS</span><h2 style="margin-top:6px">Автоматические выводы</h2></div>
         <div class="note">Формируются по данным ведущих специалистов и фактического исполнения. Обновляются автоматически.</div>
       </div>
       <div class="ins" id="teamInsights"></div>
@@ -1398,6 +1434,10 @@ function setSub(view){
   } else if(view==='gallery'){
     html='<span><b>'+(nGal||'')+'</b> визуализаций</span>'+
          '<span>превью проектов · ссылки на Canva</span>';
+  } else if(view==='queue'){
+    var nq=(typeof QUEUE!=='undefined'&&QUEUE)?QUEUE.length:0;
+    html='<span><b>'+nq+'</b> '+(nq%10===1&&nq%100!==11?'проект':((nq%10>=2&&nq%10<=4)&&(nq%100<10||nq%100>=20)?'проекта':'проектов'))+' в очереди</span>'+
+         '<span>будут взяты в работу следующими</span>';
   } else if(view==='team'){
     html='<span>нагрузка команды</span>'+
          '<span>ведущие специалисты и исполнители</span>'+
@@ -1413,6 +1453,7 @@ _tabs.forEach(t=>t.addEventListener('click',()=>{
   document.getElementById('view-current').hidden=(v!=='current');
   const _g=document.getElementById('view-gallery'); if(_g) _g.hidden=(v!=='gallery');
   const _t=document.getElementById('view-team'); if(_t) _t.hidden=(v!=='team');
+  const _q=document.getElementById('view-queue'); if(_q) _q.hidden=(v!=='queue');
   if(v==='team') openTeam();
   currentView=v; setFooter(v); setSub(v);
   scrollToDash();
@@ -1499,6 +1540,7 @@ const CONFIG={
   portfolioCSV:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1421922288&single=true&output=csv",
   currentCSV:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1563839663&single=true&output=csv",
   tasksCSV:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1475058938&single=true&output=csv",
+  queueCSV:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=254883274&single=true&output=csv",
   detailCSV:[
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1065117056&single=true&output=csv",
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vTRuyRrMZFfbRW3Qm-ptWDNMgZiy3vTJxBb54rJisso_Z2pxi3ZUHgB2wsF9bfV-g/pub?gid=1426132883&single=true&output=csv",
@@ -1513,6 +1555,7 @@ const CONFIG={
 };
 let DETAIL=[]; // tasks from detail pages
 let TASKS=[]; // внеплановые задачи
+let QUEUE=[]; // проекты в очереди
 
 const num=v=>{const n=parseFloat(String(v==null?'':v).replace(/\s/g,'').replace('%','').replace(',','.'));return isNaN(n)?0:n;};
 const pct01=v=>{const n=num(v);return n>1?n/100:n;};
@@ -1762,9 +1805,38 @@ function renderTeam(){
   }
   document.getElementById('teamBars').innerHTML=curBlock('Ведущие специалисты визуализации',aggCur(false))+curBlock('Ведущие специалисты · Альбом АИ',aggCur(true));
   renderTeamDetail();
+  renderTeamTasks();
   var ti=document.getElementById('teamInsights'); if(ti) ti.innerHTML=buildTeamInsights();
 }
 function fmtArea2(n){return Math.round(n).toLocaleString('ru-RU')+' м²';}
+function renderTeamTasks(){
+  var host=document.getElementById('teamTasks'); if(!host) return;
+  var T=TASKS||[];
+  var today=new Date(); today.setHours(0,0,0,0);
+  function isDone(s){return /выполн|заверш|готов|done|закры|сдан|сделан/i.test(s||'');}
+  var by={};
+  T.forEach(function(t){
+    var o=(t.owner||'').trim(); if(!o) return;
+    var done=isDone(t.status);
+    var due=parseRuDate(t.due);
+    var over=(due && due<today && !done);
+    if(!by[o]) by[o]={name:o,total:0,active:0,done:0,over:0};
+    by[o].total++; if(done) by[o].done++; else by[o].active++; if(over) by[o].over++;
+  });
+  var a=Object.keys(by).map(function(k){return by[k];}).sort(function(x,y){return y.active-x.active||y.total-x.total;});
+  if(!a.length){ host.innerHTML='<div class="note" style="padding:4px 2px">Во внеплановых задачах не указан ответственный (столбец «Ответственный»), либо лист пуст.</div>'; return; }
+  var mT=Math.max(1,...a.map(function(p){return p.total;}));
+  var rows=a.map(function(p,i){
+    var w=Math.round(p.total/mT*100), wa=Math.round(p.active/mT*100);
+    var col=(i===0)?'var(--orange)':'var(--navy)';
+    var sub=p.active+' актив.'+(p.over>0?(' · <span style="color:#E5484D">просроч. '+p.over+'</span>'):'')+' · '+p.done+' вып.';
+    return '<div class="tbar2"><div class="tbn">'+p.name+'</div><div class="tbcol">'+
+      '<div class="tb2r"><span class="lab">задач</span><div class="tbt"><i style="width:'+w+'%;background:'+col+'"></i></div><span class="v">'+p.total+'</span></div>'+
+      '<div class="tb2r sub"><span class="lab">актив</span><div class="tbt"><i style="width:'+wa+'%;background:var(--navy);opacity:.5"></i></div><span class="v">'+sub+'</span></div>'+
+      '</div></div>';
+  }).join('');
+  host.innerHTML='<div class="tblk"><div class="tblk-h">Внеплановые задачи · по ответственным · '+a.length+'</div>'+rows+'</div>';
+}
 function buildTeamInsights(){
   var out=[];
   var C=CURRENT||[];
@@ -1837,6 +1909,65 @@ function renderTeamDetail(){
   bars.innerHTML=block('Команда визуализации', agg(false), 'помещ.')+block('Команда · Альбом АИ', agg(true), 'разд');
   grid.style.display='none';
 }
+function parseQueue(text){
+  var rows=to2D(text); if(!rows.length) return [];
+  var hdr=-1;
+  for(var i=0;i<Math.min(10,rows.length);i++){ var j=(rows[i]||[]).map(norm);
+    if(j.some(function(c){return c.indexOf('проект')===0||c==='объект'||c==='наименование'||c.indexOf('назван')===0;})){ hdr=i; break; } }
+  if(hdr<0) hdr=0;
+  var m=colMap(rows[hdr]); var out=[];
+  for(var r=hdr+1;r<rows.length;r++){ var row=rows[r]; if(!row) continue;
+    var name=pick(row,m,['Проекты','Проект','Объект','Наименование','Название']);
+    if(!name) continue;
+    out.push({
+      num:pick(row,m,['№','N','Номер','#']),
+      name:name,
+      type:pick(row,m,['Тип','Вид','Назначение','Категория']),
+      city:pick(row,m,['Город','Регион','Локация']),
+      ready:pick(row,m,['Готовность','Прогресс','Готовность %']),
+      status:pick(row,m,['Статус','Состояние','Этап']),
+      note:pick(row,m,['Примечание','Комментарий','Коментарий','Заметка'])||pickContains(row,m,['примеч','коммент','комент','заметк'],['проект','объект','наименован','назван','тип','город']),
+      acc:pick(row,m,['Номер АСС','АСС','Номер асс','№ АСС'])
+    });
+  }
+  try{ window.__queueDiag={cols:(out.length?Object.keys(m):[]),total:out.length,sample:out[0]||null}; }catch(e){}
+  return out;
+}
+function renderQueue(){
+  var grid=document.getElementById('queueGrid'); if(!grid) return;
+  var Q=QUEUE||[];
+  var qc=document.getElementById('queueCount'); if(qc) qc.textContent=Q.length;
+  var kp=document.getElementById('queueKpis');
+  if(!Q.length){ grid.innerHTML='<div class="note" style="padding:4px 2px">Лист «В очереди» пуст или ещё не подключён. Добавьте проекты в лист — они появятся здесь автоматически.</div>'; if(kp)kp.innerHTML=''; return; }
+  function readyNum(q){ var s=String(q.ready||''); if(!/[0-9]/.test(s)) return null; var n=num(s); if(n<=1 && /0\.[0-9]/.test(s)) n=n*100; return Math.max(0,Math.min(100,Math.round(n))); }
+  var withR=Q.map(readyNum).filter(function(x){return x!=null;});
+  var avgR=withR.length?Math.round(withR.reduce(function(a,c){return a+c;},0)/withR.length):null;
+  var hiR=Q.filter(function(q){var r=readyNum(q); return r!=null && r>=80;}).length;
+  var withAcc=Q.filter(function(q){return q.acc;}).length;
+  if(kp) kp.innerHTML=
+    '<div class="tkpi"><div class="v">'+Q.length+'</div><div class="l">В очереди</div></div>'+
+    (avgR!=null?('<div class="tkpi acc"><div class="v">'+avgR+'%</div><div class="l">Средняя готовность</div></div>'):'')+
+    (withR.length?('<div class="tkpi ok"><div class="v">'+hiR+'</div><div class="l">Готовы ≥80%</div></div>'):'')+
+    (withAcc?('<div class="tkpi"><div class="v">'+withAcc+'</div><div class="l">С номером АСС</div></div>'):'');
+  var arr=Q.slice().sort(function(a,b){ var ra=readyNum(a), rb=readyNum(b); ra=(ra==null?-1:ra); rb=(rb==null?-1:rb); if(rb!==ra) return rb-ra; return String(a.name).localeCompare(String(b.name),'ru'); });
+  grid.innerHTML=arr.map(function(q,i){
+    var r=readyNum(q);
+    var col=(typeof taskStatusColor==='function')?taskStatusColor(q.status,/выполн|заверш|готов|сдан/i.test(q.status||''),false):'var(--ink3)';
+    var statusChip=q.status?('<span class="stchip"><span class="sd" style="background:'+col+'"></span>'+q.status+'</span>'):'';
+    var ready=(r!=null)
+      ? '<div class="qready"><div class="qrt"><i style="width:'+r+'%"></i></div><span class="qrp">'+r+'%</span></div>'
+      : (q.ready?('<div class="qrow"><span class="ql">готовность</span><span class="qv">'+q.ready+'</span></div>'):'');
+    var rowsHtml='';
+    if(q.acc) rowsHtml+='<div class="qrow"><span class="ql">номер АСС</span><span class="qv">'+q.acc+'</span></div>';
+    return '<div class="qcard rise" style="animation-delay:'+(i*.05)+'s">'+
+      '<div class="qhead"><div class="qn">'+(q.num?('<span class="qnum">'+q.num+'</span> '):'')+q.name+'</div>'+statusChip+'</div>'+
+      (([q.type,q.city].filter(Boolean).join(' · '))?('<div class="qmeta">'+[q.type,q.city].filter(Boolean).join(' · ')+'</div>'):'')+
+      (ready?('<div class="qreadywrap">'+ready+'</div>'):'')+
+      (rowsHtml?('<div class="qrows">'+rowsHtml+'</div>'):'')+
+      (q.note?('<div class="qnote">'+q.note+'</div>'):'')+
+      '</div>';
+  }).join('');
+}
 function renderGallery(){
   const grid=document.getElementById('galGrid'); if(!grid) return;
   const normUrl=s=>{s=String(s||'').trim();if(!s)return '';if(/^https?:\/\//i.test(s))return s;if(/(canva\.(com|link|site)|drive\.google|googleusercontent|\.(png|jpe?g|webp|gif))/i.test(s))return 'https://'+s.replace(/^\/+/,'');return '';};
@@ -1867,6 +1998,7 @@ async function init(){
     if(CONFIG.portfolioCSV) jobs.push(fetchText(CONFIG.portfolioCSV).then(t=>{const m=parsePortfolio(t);if(m.length)DATA=m;}));
     if(CONFIG.currentCSV)   jobs.push(fetchText(CONFIG.currentCSV).then(t=>{const m=parseCurrent(t);if(m.length)CURRENT=m;}));
     if(CONFIG.tasksCSV)     jobs.push(fetchText(CONFIG.tasksCSV).then(t=>{const m=parseTasks(t);TASKS=m;},function(){}));
+    if(CONFIG.queueCSV)     jobs.push(fetchText(CONFIG.queueCSV).then(t=>{const m=parseQueue(t);QUEUE=m;},function(){}));
     if(jobs.length){await Promise.all(jobs);live=true;}
     if(Array.isArray(CONFIG.detailCSV)&&CONFIG.detailCSV.length){
       const dres=await Promise.allSettled(CONFIG.detailCSV.map(u=>fetchText(u).then(function(t){return {ok:true,rows:parseDetail(t)};},function(e){return {ok:false,err:String(e)};})));
@@ -1877,7 +2009,7 @@ async function init(){
   }catch(e){live=false;console.warn('Онлайн-данные недоступны, показан снимок:',e);}
   const src=document.getElementById('dataSource');
   if(src) src.textContent=(CONFIG.portfolioCSV||CONFIG.currentCSV)?(live?'источник: онлайн-таблица':'источник: снимок (нет связи)'):'источник: снимок';
-  buildChips(); wireFilters(); render(); renderCurrent(); renderGallery(); renderTasks(); setFooter();
+  buildChips(); wireFilters(); render(); renderCurrent(); renderGallery(); renderTasks(); renderQueue(); setFooter();
   if(currentView==='team') openTeam();
 }
 init();
