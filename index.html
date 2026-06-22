@@ -365,7 +365,6 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .task-main{flex:0 0 auto;max-width:44%;min-width:0}
 .task-mid{flex:1 1 auto;min-width:0;font-size:12px;line-height:1.5;color:var(--ink2);padding-top:1px}
 .task-cm{}
-.task.done .task-mid{color:var(--ink3)}
 .task-t{font-size:13.5px;color:var(--ink);font-weight:500;line-height:1.4}
 .task-proj{color:var(--ink3);font-weight:400;font-family:'IBM Plex Mono',monospace;font-size:11px}
 .task-m{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink2);margin-top:5px}
@@ -382,7 +381,6 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .ptag.p1{color:var(--ink3)}
 .task-due{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink2);white-space:nowrap}
 .task-due.over{color:#E5484D;font-weight:600}
-.task.done{opacity:.5}
 .task.over .task-t{color:#E5484D}
 .reportbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px}
 .snapbtn{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--navy);border:none;border-radius:30px;padding:13px 24px;cursor:pointer;transition:background .2s,transform .2s}
@@ -1153,9 +1151,11 @@ function parseTasks(text){
       status:pick(row,m,['Статус','Состояние']),
       setDate:pick(row,m,['Поставлена','Дата постановки','Создана','Дата']),
       due:pick(row,m,['Срок','Дедлайн','Срок выполнения']),
-      note:pick(row,m,['Комментарий','Примечание','Заметка'])
+      note:pick(row,m,['Комментарий','Коментарий','Комментарии','Примечание','Примечания','Заметка','Заметки'])||pickContains(row,m,['коммент','комент','примеч','заметк','деталь'],['задач','задани','наименован'])
     });
+    if(!window.__tasksCols){window.__tasksCols=Object.keys(m);}
   }
+  try{ window.__tasksDiag={cols:(out.length?Object.keys(m):[]),total:out.length,withNote:out.filter(function(t){return t.note;}).length,sample:out[0]||null,sampleNote:(out[0]||{}).note||''}; }catch(e){}
   return out;
 }
 function taskStatusColor(s,done,over){ if(done) return 'var(--done)'; if(over) return '#E5484D'; s=norm(s); if(/работ|процесс|выполня/.test(s)) return 'var(--smr)'; if(/нов/.test(s)) return 'var(--accent)'; if(/отлож|пауз|приостан|ожид/.test(s)) return 'var(--hold)'; return 'var(--ink3)'; }
@@ -1498,6 +1498,7 @@ function to2D(text){
 }
 function colMap(row){const m={};(row||[]).forEach((c,i)=>{const k=norm(c);if(k&&!(k in m))m[k]=i;});return m;}
 function pick(row,map,names){for(const n of names){const i=map[norm(n)];if(i!=null){const v=row[i];if(v!=null&&String(v).trim()!=='')return String(v).trim();}}return '';}
+function pickContains(row,map,subs,exclude){for(const key in map){if(exclude&&exclude.some(function(e){return key.indexOf(e)>=0;}))continue;for(let s=0;s<subs.length;s++){if(key.indexOf(subs[s])>=0){const v=row[map[key]];if(v!=null&&String(v).trim()!=='')return String(v).trim();}}}return '';}
 function findHeader(rows,labels){const L=labels.map(norm);return rows.findIndex(r=>Array.isArray(r)&&r.some(c=>L.includes(norm(c))));}
 
 function parsePortfolio(text){
