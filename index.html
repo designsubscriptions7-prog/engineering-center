@@ -362,7 +362,10 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .summary p b{color:var(--ink);font-weight:600}
 .task{display:flex;justify-content:space-between;gap:18px;padding:13px 0;border-bottom:1px solid var(--line);align-items:flex-start}
 .task:last-child{border-bottom:none}
-.task-main{flex:1;min-width:0}
+.task-main{flex:0 0 auto;max-width:44%;min-width:0}
+.task-mid{flex:1 1 auto;min-width:0;font-size:12px;line-height:1.5;color:var(--ink2);padding-top:1px}
+.task-cm{}
+.task.done .task-mid{color:var(--ink3)}
 .task-t{font-size:13.5px;color:var(--ink);font-weight:500;line-height:1.4}
 .task-proj{color:var(--ink3);font-weight:400;font-family:'IBM Plex Mono',monospace;font-size:11px}
 .task-m{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink2);margin-top:5px}
@@ -371,7 +374,7 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .stchip .sd{width:6px;height:6px;border-radius:50%;display:inline-block}
 .task-note{color:var(--ink3)}
 .task-kind{color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
-.task-note2{font-size:11.5px;color:var(--ink3);margin-top:5px;line-height:1.45;font-style:italic}
+@media(max-width:760px){.task{flex-wrap:wrap}.task-main{max-width:100%;flex:1 1 100%}.task-mid{flex:1 1 100%;order:3;margin-top:4px}.task-side{order:2}}
 .task-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
 .ptag{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:20px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
 .ptag.p3{background:rgba(229,72,77,.12);border-color:rgba(229,72,77,.4);color:#E5484D}
@@ -1166,9 +1169,8 @@ function taskRow(t){
   meta.push('<span class="stchip"><span class="sd" style="background:'+col+'"></span>'+(t.status||'—')+'</span>');
   return '<div class="task'+(t._done?' done':'')+(t._overdue?' over':'')+'">'+
     '<div class="task-main"><div class="task-t">'+t.task+(t.proj?' <span class="task-proj">· '+t.proj+'</span>':'')+'</div>'+
-    '<div class="task-m">'+meta.join(' · ')+'</div>'+
-    (t.note?('<div class="task-note2">'+t.note+'</div>'):'')+
-    '</div>'+
+    '<div class="task-m">'+meta.join(' · ')+'</div></div>'+
+    '<div class="task-mid">'+(t.note?('<span class="task-cm">'+t.note+'</span>'):'')+'</div>'+
     '<div class="task-side">'+prioTag+(dueTxt?('<span class="task-due'+(t._overdue?' over':'')+'">'+(t._overdue?'просрочено · ':'срок ')+dueTxt+'</span>'):'')+'</div>'+
     '</div>';
 }
