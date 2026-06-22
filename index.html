@@ -272,6 +272,12 @@ section{margin-top:64px}
 .tb2r .tbt{flex:1;height:15px;background:var(--panel2);border-radius:3px;overflow:hidden;min-width:0}
 .tb2r.sub .tbt{height:9px}
 .tb2r .tbt i{display:block;height:100%}
+.tb2r .tbt2{flex:1;height:15px;background:var(--panel2);border-radius:3px;overflow:hidden;min-width:0;display:flex}
+.tb2r .tbt2 i{display:block;height:100%;flex:0 0 auto}
+.tcap{margin-left:40px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.02em;color:var(--ink2)}
+.tlegend{display:flex;gap:18px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.tlegend span{display:inline-flex;align-items:center;gap:6px}
+.tlegend i{width:10px;height:10px;border-radius:2px;display:inline-block}
 .tb2r .v{width:124px;text-align:right;font-size:11px;color:var(--ink2);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
 .tb2r.sub .v{color:var(--ink3)}
 @media(max-width:560px){.tbar2{flex-direction:column;align-items:stretch;gap:7px}.tbar2 .tbn{width:auto}.tb2r .v{width:100px}}
@@ -1827,15 +1833,14 @@ function renderTeamTasks(){
   if(!a.length){ host.innerHTML='<div class="note" style="padding:4px 2px">Во внеплановых задачах не указан ответственный (столбец «Ответственный»), либо лист пуст.</div>'; return; }
   var mT=Math.max(1,...a.map(function(p){return p.total;}));
   var rows=a.map(function(p,i){
-    var w=Math.round(p.total/mT*100), wa=Math.round(p.active/mT*100);
-    var col=(i===0)?'var(--orange)':'var(--navy)';
-    var sub=p.active+' актив.'+(p.over>0?(' · <span style="color:#E5484D">просроч. '+p.over+'</span>'):'')+' · '+p.done+' вып.';
+    var wa=Math.round(p.active/mT*100), wd=Math.round(p.done/mT*100);
+    var sub='<span style="color:var(--orange)">'+p.active+' актив.</span> · <span style="color:var(--done)">'+p.done+' вып.</span>'+(p.over>0?(' · <span style="color:#E5484D">просроч. '+p.over+'</span>'):'');
     return '<div class="tbar2"><div class="tbn">'+p.name+'</div><div class="tbcol">'+
-      '<div class="tb2r"><span class="lab">задач</span><div class="tbt"><i style="width:'+w+'%;background:'+col+'"></i></div><span class="v">'+p.total+'</span></div>'+
-      '<div class="tb2r sub"><span class="lab">актив</span><div class="tbt"><i style="width:'+wa+'%;background:var(--navy);opacity:.5"></i></div><span class="v">'+sub+'</span></div>'+
+      '<div class="tb2r"><span class="lab">задач</span><div class="tbt2"><i style="width:'+wa+'%;background:var(--orange)"></i><i style="width:'+wd+'%;background:var(--done)"></i></div><span class="v">'+p.total+'</span></div>'+
+      '<div class="tcap">'+sub+'</div>'+
       '</div></div>';
   }).join('');
-  host.innerHTML='<div class="tblk"><div class="tblk-h">Внеплановые задачи · по ответственным · '+a.length+'</div>'+rows+'</div>';
+  host.innerHTML='<div class="tblk"><div class="tblk-h">Внеплановые задачи · по ответственным · '+a.length+'</div>'+rows+'<div class="tlegend"><span><i style="background:var(--orange)"></i>активные</span><span><i style="background:var(--done)"></i>выполненные</span></div></div>';
 }
 function buildTeamInsights(){
   var out=[];
