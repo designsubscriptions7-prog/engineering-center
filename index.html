@@ -360,6 +360,13 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .summary .sh{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
 .summary p{margin:0;font-size:12.5px;line-height:1.65;color:var(--ink2)}
 .summary p b{color:var(--ink);font-weight:600}
+.tkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:18px}
+.tkpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:13px 15px}
+.tkpi .v{font-family:'Space Grotesk','Archivo',sans-serif;font-size:25px;font-weight:600;line-height:1;color:var(--ink)}
+.tkpi .l{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3);margin-top:8px}
+.tkpi.warn .v{color:#E5484D}
+.tkpi.ok .v{color:var(--done)}
+.tkpi.acc .v{color:var(--accent)}
 .task{display:flex;justify-content:space-between;gap:18px;padding:13px 0;border-bottom:1px solid var(--line);align-items:flex-start}
 .task:last-child{border-bottom:none}
 .task-main{flex:0 0 auto;max-width:44%;min-width:0}
@@ -681,6 +688,7 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
       <div><span class="idx mono">A2 / TASKS</span><h2 style="margin-top:6px">Внеплановые задачи</h2></div>
       <div class="note">Задачи вне основного плана — из листа «Внеплановые задачи». Просроченные сверху, затем по приоритету и сроку; выполненные — внизу.</div>
     </div>
+    <div class="tkpis" id="cTaskKpis"></div>
     <div class="card"><div id="cTasks"></div></div>
     <div class="summary" id="cTasksSum" hidden></div>
   </section>
@@ -1177,7 +1185,7 @@ function taskRow(t){
 function renderTasks(){
   var host=document.getElementById('cTasks'); if(!host) return;
   var T=TASKS||[];
-  if(!T.length){ host.innerHTML='<div class="note" style="padding:4px 2px">Лист «Внеплановые задачи» пуст или ещё не подключён. Добавьте строки в лист — они появятся здесь автоматически.</div>'; setSummary('cTasksSum',''); return; }
+  if(!T.length){ host.innerHTML='<div class="note" style="padding:4px 2px">Лист «Внеплановые задачи» пуст или ещё не подключён. Добавьте строки в лист — они появятся здесь автоматически.</div>'; var _tk0=document.getElementById('cTaskKpis'); if(_tk0)_tk0.innerHTML=''; setSummary('cTasksSum',''); return; }
   var today=new Date(); today.setHours(0,0,0,0);
   function prioRank(p){p=norm(p);if(/высок|high|критич|срочн/.test(p))return 3;if(/средн|medium|обычн/.test(p))return 2;if(/низк|low/.test(p))return 1;return 0;}
   function isDone(s){return /выполн|заверш|готов|done|закры|сдан|сделан/i.test(s||'');}
@@ -1192,6 +1200,15 @@ function renderTasks(){
   done.sort(function(a,b){var ad=a._due?a._due.getTime():0,bd=b._due?b._due.getTime():0;return bd-ad;});
   host.innerHTML=active.concat(done).map(taskRow).join('');
   var total=T.length, nactive=active.length, nover=T.filter(function(t){return t._overdue;}).length, ndone=done.length;
+  var nhigh=active.filter(function(t){return t._pr===3;}).length;
+  var tk=document.getElementById('cTaskKpis');
+  if(tk){ tk.innerHTML=
+    '<div class="tkpi"><div class="v">'+total+'</div><div class="l">Всего задач</div></div>'+
+    '<div class="tkpi acc"><div class="v">'+nactive+'</div><div class="l">Активных</div></div>'+
+    '<div class="tkpi'+(nover>0?' warn':'')+'"><div class="v">'+nover+'</div><div class="l">Просрочено</div></div>'+
+    '<div class="tkpi"><div class="v">'+nhigh+'</div><div class="l">Высокий приоритет</div></div>'+
+    '<div class="tkpi ok"><div class="v">'+ndone+'</div><div class="l">Выполнено</div></div>';
+  }
   var s='Всего внеплановых задач: <b>'+total+'</b>. В работе и ожидании — <b>'+nactive+'</b>, выполнено — <b>'+ndone+'</b>.';
   s+= nover>0 ? ' Просрочено — <b>'+nover+'</b> '+plural(nover,'задача','задачи','задач')+': в первую очередь.' : ' Просроченных нет.';
   var hp=active.filter(function(t){return t._pr===3 && !t._overdue;}).length;
