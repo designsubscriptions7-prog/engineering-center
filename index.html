@@ -367,7 +367,11 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .task-proj{color:var(--ink3);font-weight:400;font-family:'IBM Plex Mono',monospace;font-size:11px}
 .task-m{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink2);margin-top:5px}
 .task-st .sd{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.stchip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;border:1px solid var(--line2);font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2);vertical-align:middle}
+.stchip .sd{width:6px;height:6px;border-radius:50%;display:inline-block}
 .task-note{color:var(--ink3)}
+.task-kind{color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
+.task-note2{font-size:11.5px;color:var(--ink3);margin-top:5px;line-height:1.45;font-style:italic}
 .task-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
 .ptag{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:20px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
 .ptag.p3{background:rgba(229,72,77,.12);border-color:rgba(229,72,77,.4);color:#E5484D}
@@ -671,11 +675,21 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
     <div class="cards" id="cCards"></div>
   </section>
   </div><!-- /repPart1 -->
+
+  <section>
+    <div class="shead">
+      <div><span class="idx mono">A2 / TASKS</span><h2 style="margin-top:6px">Внеплановые задачи</h2></div>
+      <div class="note">Задачи вне основного плана — из листа «Внеплановые задачи». Просроченные сверху, затем по приоритету и сроку; выполненные — внизу.</div>
+    </div>
+    <div class="card"><div id="cTasks"></div></div>
+    <div class="summary" id="cTasksSum" hidden></div>
+  </section>
+
   <div class="rep-part" id="repPart2">
 
   <section>
     <div class="shead">
-      <div><span class="idx mono">A2 / DELIVERED · 7 ДНЕЙ</span><h2 style="margin-top:6px">Выдано за неделю</h2></div>
+      <div><span class="idx mono">A3 / DELIVERED · 7 ДНЕЙ</span><h2 style="margin-top:6px">Выдано за неделю</h2></div>
       <div class="note">Помещения и разделы с плановой выдачей за последние 7 дней — что должно было быть выдано, со статусом. Разбито на Визуализацию и Альбом АИ.</div>
     </div>
     <div class="card"><div id="cDelivered"></div></div>
@@ -684,7 +698,7 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
 
   <section>
     <div class="shead">
-      <div><span class="idx mono">A3 / CORRECTIONS · 7 ДНЕЙ</span><h2 style="margin-top:6px">Корректировки за неделю</h2></div>
+      <div><span class="idx mono">A4 / CORRECTIONS · 7 ДНЕЙ</span><h2 style="margin-top:6px">Корректировки за неделю</h2></div>
       <div class="note">Корректировки с изменением даты выдачи за последние 7 дней — по столбцу «Дата выдачи» детальных листов. Разбито на Визуализацию и Альбом АИ.</div>
     </div>
     <div class="card"><div id="cUpdates"></div></div>
@@ -695,7 +709,7 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
 
   <section>
     <div class="shead">
-      <div><span class="idx mono">A4 / UPCOMING · 7 ДНЕЙ</span><h2 style="margin-top:6px">К выдаче — неделя вперёд</h2></div>
+      <div><span class="idx mono">A5 / UPCOMING · 7 ДНЕЙ</span><h2 style="margin-top:6px">К выдаче — неделя вперёд</h2></div>
       <div class="note">Что запланировано к выдаче в ближайшие 7 дней по плановым датам выдачи. Разбито на Визуализацию и Альбом АИ.</div>
     </div>
     <div class="card"><div id="cUpcoming"></div></div>
@@ -703,15 +717,6 @@ body.snapping .reveal .rise,body.snapping .reveal .kpi{opacity:1!important;trans
   </section>
   </div><!-- /repPart3 -->
   </div><!-- /reportArea -->
-
-  <section>
-    <div class="shead">
-      <div><span class="idx mono">A5 / TASKS</span><h2 style="margin-top:6px">Внеплановые задачи</h2></div>
-      <div class="note">Задачи вне основного плана — из листа «Внеплановые задачи». Просроченные сверху, затем по приоритету и сроку; выполненные — внизу.</div>
-    </div>
-    <div class="card"><div id="cTasks"></div></div>
-    <div class="summary" id="cTasksSum" hidden></div>
-  </section>
 
   <section>
     <div class="shead">
@@ -1137,6 +1142,7 @@ function parseTasks(text){
     if(!task) continue;
     out.push({
       task:task,
+      kind:pick(row,m,['Вид работы','Вид работ','Тип работы','Категория']),
       proj:pick(row,m,['Проект','Объект']),
       owner:pick(row,m,['Ответственный','Ответсвенный','Исполнитель']),
       prio:pick(row,m,['Приоритет','Важность']),
@@ -1153,9 +1159,15 @@ function taskRow(t){
   var col=taskStatusColor(t.status,t._done,t._overdue);
   var prioTag=t.prio?('<span class="ptag p'+t._pr+'">'+t.prio+'</span>'):'';
   var dueTxt=t._due?dChip(t._due):(t.due||'');
+  var meta=[];
+  if(t.kind) meta.push('<span class="task-kind">'+t.kind+'</span>');
+  if(t.owner) meta.push('<span>'+t.owner+'</span>');
+  meta.push('<span class="stchip"><span class="sd" style="background:'+col+'"></span>'+(t.status||'—')+'</span>');
   return '<div class="task'+(t._done?' done':'')+(t._overdue?' over':'')+'">'+
     '<div class="task-main"><div class="task-t">'+t.task+(t.proj?' <span class="task-proj">· '+t.proj+'</span>':'')+'</div>'+
-    '<div class="task-m">'+(t.owner?('<span>'+t.owner+'</span> · '):'')+'<span class="task-st"><span class="sd" style="background:'+col+'"></span>'+(t.status||'—')+'</span>'+(t.note?(' · <span class="task-note">'+t.note+'</span>'):'')+'</div></div>'+
+    '<div class="task-m">'+meta.join(' · ')+'</div>'+
+    (t.note?('<div class="task-note2">'+t.note+'</div>'):'')+
+    '</div>'+
     '<div class="task-side">'+prioTag+(dueTxt?('<span class="task-due'+(t._overdue?' over':'')+'">'+(t._overdue?'просрочено · ':'срок ')+dueTxt+'</span>'):'')+'</div>'+
     '</div>';
 }
@@ -1165,7 +1177,7 @@ function renderTasks(){
   if(!T.length){ host.innerHTML='<div class="note" style="padding:4px 2px">Лист «Внеплановые задачи» пуст или ещё не подключён. Добавьте строки в лист — они появятся здесь автоматически.</div>'; setSummary('cTasksSum',''); return; }
   var today=new Date(); today.setHours(0,0,0,0);
   function prioRank(p){p=norm(p);if(/высок|high|критич|срочн/.test(p))return 3;if(/средн|medium|обычн/.test(p))return 2;if(/низк|low/.test(p))return 1;return 0;}
-  function isDone(s){return /выполн|заверш|готов|done|закры|сдан/i.test(s||'');}
+  function isDone(s){return /выполн|заверш|готов|done|закры|сдан|сделан/i.test(s||'');}
   T.forEach(function(t){ t._due=parseRuDate(t.due); t._done=isDone(t.status); t._pr=prioRank(t.prio); t._overdue=(t._due && t._due<today && !t._done); });
   var active=T.filter(function(t){return !t._done;});
   var done=T.filter(function(t){return t._done;});
