@@ -380,7 +380,6 @@ footer{margin-top:54px;padding-top:22px;border-top:1px solid var(--line2);displa
 .task-due{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink2);white-space:nowrap}
 .task-due.over{color:#E5484D;font-weight:600}
 .task.done{opacity:.5}
-.task.done .task-t{text-decoration:line-through}
 .task.over .task-t{color:#E5484D}
 .reportbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 22px}
 .snapbtn{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--navy);border:none;border-radius:30px;padding:13px 24px;cursor:pointer;transition:background .2s,transform .2s}
@@ -1089,14 +1088,16 @@ function projDetailHTML(name){
 function parseRuDate(s){
   s=String(s||'').trim(); if(!s) return null;
   var months={'январ':0,'феврал':1,'март':2,'апрел':3,'мая':4,'ма':4,'июн':5,'июл':6,'август':7,'сентябр':8,'октябр':9,'ноябр':10,'декабр':11};
-  // numeric A.B.YYYY or A/B/YYYY (handles both D/M/Y and M/D/Y)
-  var m=s.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})/);
+  // numeric A.B.YYYY or A/B/YYYY. Разделитель решает неоднозначность:
+  //   точка → европейский день.месяц ; слеш → американский месяц/день
+  var m=s.match(/(\d{1,2})([.\/-])(\d{1,2})[.\/-](\d{2,4})/);
   if(m){
-    var a=+m[1], b=+m[2], y=+m[3]; if(y<100) y+=2000;
+    var a=+m[1], sep=m[2], b=+m[3], y=+m[4]; if(y<100) y+=2000;
     var day, mon;
-    if(a>12){ day=a; mon=b; }            // первое число >12 → день (европейский)
-    else if(b>12){ mon=a; day=b; }       // второе >12 → день (американский M/D/Y)
-    else { mon=a; day=b; }               // неоднозначно (оба ≤12) → трактуем как M/D/Y
+    if(a>12){ day=a; mon=b; }            // первое >12 → точно день
+    else if(b>12){ mon=a; day=b; }       // второе >12 → точно день (M/D)
+    else if(sep==='.'){ day=a; mon=b; }  // оба ≤12 + точка → день.месяц (европейский)
+    else { mon=a; day=b; }               // оба ≤12 + слеш → месяц/день (американский)
     var d=new Date(y,mon-1,day); return isNaN(d)?null:d;
   }
   // "5 июня 2026" / "5 июня 2026 г."
